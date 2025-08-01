@@ -1,0 +1,120 @@
+import ollama from 'ollama'
+
+import { config } from './config.browser'
+
+export const generateOllama = async (
+  prompt,
+  model = config.llm.model,
+  stream = true,
+  temperature = 0,
+  format = null
+) => {
+  const response = await ollama.generate({
+    model: model,
+    prompt: prompt,
+    stream: stream,
+    temperature: temperature,
+    format: format
+  })
+
+  // The generate() call returns an object, so we return the string part
+  return response.response
+}
+
+// System prompt for explaining a PDF report
+const EXPLAIN_REPORT_PROMPT = `
+You are a helpful health assistant. You can accurately interpret lab test results, e.g., blood test reports and others.
+Your task is to explain a medical report to the user in simple, easy-to-understand language.
+- Start with a general overview of the report's purpose, what is tests.
+- Correctly identify the metioned values and report them faithfully.
+- Highlight any key findings or values that are outside the normal range.
+- Explain what these findings might mean, but **do not provide a diagnosis**.
+- Always recommend that the user consult a healthcare professional for a proper interpretation.
+- Be clear and factual, avoiding medical jargon. Do NOT make up any information.
+
+Note: Sometimes text extracted from the report may be improperly formatted or contain errors.
+E.g., a number "78" might appear as "7 8". Or report headers, measured values, and reference values might be misaligned.
+- If you encounter such issues, do your best to interpret the text correctly.
+
+User's original query: {query}
+
+---
+Report Text:
+{reportText}
+---
+`
+
+// Define functions to handle each of the intents
+const handleGreeting = (entities) => {
+  return 'Hello! How can I assist you today?'
+}
+
+const handleDirectResponse = async (entities) => {
+  const query = entities.query || 'Hi, how can I help you?'
+  const llmResponse = await generateOllama(query, config.llm.model, false, 0, null)
+  return llmResponse
+}
+
+const handleExplainPdfReport = async (entities) => {
+  const { pdf_file_path: filePath, query } = entities
+
+  // Check if the file path is valid
+  if (!filePath) {
+    console.warn('PDF intent received, but no file path was provided.')
+    return 'I was asked to explain a PDF report, but no file path was provided. Please upload a PDF and specify your query.'
+  }
+
+  try {
+    console.log('Extracting text from PDF:', filePath)
+    const reportText = await window.electronAPI.extractPdfText(filePath)
+
+    // Check if text was successfully extracted
+    if (!reportText) {
+      return 'I was unable to extract any text from the provided PDF file. Please ensure the file is not corrupted or password-protected.'
+    }
+
+    console.log('Extracted PDF text length:', reportText.length)
+
+    // Construct the new prompt for Ollama with the extracted text
+    const prompt = EXPLAIN_REPORT_PROMPT.replace(
+      '{query}',
+      query || 'Explain this report.'
+    ).replace('{reportText}', reportText)
+
+    console.log('Sending new prompt to Ollama for explanation:', prompt)
+    const ollamaResponse = await generateOllama(prompt, config.llm.model, false, 0, null)
+    console.log('Ollama response:', ollamaResponse)
+
+    return (
+      ollamaResponse || 'Sorry, but I was unable to explain the report. Please try again later.'
+    )
+  } catch (error) {
+    console.error('Error in handleExplainPdfReport:', error)
+    return 'An error occurred while processing the PDF. Please try again or check the console for details.'
+  }
+}
+
+const handleLogHealthMetric = (entities) => {
+  const { metric_type, value, unit, date, time, subtype, notes } = entities
+
+  let response = 'Thank you for providing the information. '
+  if (metric_type && value) {
+    response += `I have logged your ${metric_type} with a value of ${value}.`
+  } else {
+    response +=
+      'I am unable to log the metric with the provided information. Can you please be more specific?'
+  }
+  return response
+}
+
+const handleUnsure = () => {
+  return "I'm not sure how to respond to that. Please ask a health-related question."
+}
+
+export const intentHandlers = {
+  GREETING: { func: handleGreeting, isAsync: false },
+  DIRECT_LLM_RESPONSE: { func: handleDirectResponse, isAsync: true },
+  EXPLAIN_PDF_REPORT: { func: handleExplainPdfReport, isAsync: true },
+  LOG_HEALTH_METRIC: { func: handleLogHealthMetric, isAsync: false },
+  UNSURE: { func: handleUnsure, isAsync: false }
+}
