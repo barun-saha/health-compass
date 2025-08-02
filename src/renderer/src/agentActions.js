@@ -244,17 +244,28 @@ const handleQuery = async (entities) => {
     // Format the response based on the query result
     let response
     if (aggregate) {
-      response = `The ${aggregate} for "${metric_type}" is:\n`
-      queryResult.forEach((row) => {
-        // Round aggregate values to 2 decimal places if they are numbers
-        const value = typeof row.value === 'number' ? row.value.toFixed(2) : row.value
-        response += `- ${value} ${row.unit || ''}\n`
-      })
+      response = `The ${aggregate} for "${metric_type}" is:\n\n`
+      const headers = `| **Value** | **Unit** |`
+      const separator = `|---|---|`
+      const rows = queryResult
+        .map((row) => {
+          // Round aggregate values to 2 decimal places if they are numbers
+          const value = typeof row.value === 'number' ? row.value.toFixed(2) : row.value
+          return `| ${value} | ${row.unit || ''} |`
+        })
+        .join('\n')
+      response += `${headers}\n${separator}\n${rows}`
     } else {
-      response = `Here are your records for "${metric_type}":\n`
-      queryResult.forEach((row) => {
-        response += `- ${row.date} at ${row.time || 'N/A'}: ${row.subtype ? row.subtype + ' ' : ''}${row.value} ${row.unit || ''}\n`
-      })
+      response = `Here are your records for "${metric_type}":\n\n`
+      const headers = `| **Date** | **Time** | **Subtype** | **Value** | **Unit** |`
+      const separator = `|---|---|---|---|---|`
+      const rows = queryResult
+        .map(
+          (row) =>
+            `| ${row.date} | ${row.time || 'N/A'} | ${row.subtype || ''} | ${row.value} | ${row.unit || ''} |`
+        )
+        .join('\n')
+      response += `${headers}\n${separator}\n${rows}`
     }
 
     return response
