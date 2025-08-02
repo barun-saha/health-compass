@@ -163,7 +163,8 @@ Available Intents and their required entities, along with some examples:
   * Example user input: "Tell me a joke", "What's the weather like?", "Order pizza"
   * Example JSON output: \`{"intent": "UNSURE"}\`
 
-Carefully discern between whether a user want to log a health metric or query existing metrics.
+Carefully discern between the LOG_HEALTH_METRIC and QUERY_METRICS intents based on whether a user's
+query wants to log a health metric or retrieve existing data.
 You can only do one of these actions at a time.
 
 Always provide a single JSON object with the "intent" key at the top level.
