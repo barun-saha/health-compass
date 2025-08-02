@@ -2,7 +2,7 @@
 
 Health Compass is a local-first, AI-powered desktop application designed to help you manage and understand your health data. Chat with a privacy-focused AI to log metrics, query your health history, and get easy-to-understand explanations of your lab reports.
 
-## Features
+## ✨ Features
 
 - **AI-Powered Chat**: Use natural language to interact with your health data.
 - **Health Metric Logging**: Easily log various metrics such as blood pressure, blood sugar, weight, sleep duration, and heart rate.
@@ -12,7 +12,7 @@ Health Compass is a local-first, AI-powered desktop application designed to help
 - **Powered by Ollama**: Leverages local large language models (LLMs) through [Ollama](https://ollama.com/) for all AI capabilities, ensuring your conversations remain private.
 - **Cross-Platform**: Works on Windows, macOS, and Linux.
 
-## How It Works
+## ⚙️ How It Works
 
 Health Compass is built with modern web technologies in a desktop container:
 - **`Electron`**: Provides the cross-platform desktop application shell.
@@ -20,15 +20,15 @@ Health Compass is built with modern web technologies in a desktop container:
 - **`Ollama`**: Runs local LLMs to understand user queries and generate responses.
 - **`SQLite`**: Stores all health data locally in a single database file on your computer.
 
-## Recommended IDE Setup
+## 💻 Recommended IDE Setup
 
 - [VSCode](https://code.visualstudio.com/) + [ESLint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint) + [Prettier](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
 
-## Prerequisites
+## 📋 Prerequisites
 
 Health Compass relies on two external pieces of software to function correctly: Ollama for AI capabilities and Poppler for PDF analysis. Please ensure they are installed and configured before running the application.
 
-### 1. Ollama
+### 🧠 1. Ollama
 
 Ollama is required to run the local large language models that power the AI chat.
 
@@ -39,7 +39,7 @@ Ollama is required to run the local large language models that power the AI chat
     ```
 3.  Ensure the Ollama server is running before you start Health Compass. The application will attempt to start it, but it's best to run it manually the first time.
 
-### 2. PDF Text Extraction (`pdftotext`)
+### 📄 2. PDF Text Extraction (`pdftotext`)
 
 For analyzing PDF lab reports, Health Compass requires the `pdftotext` command-line tool, which is part of the [Poppler](https://poppler.freedesktop.org/) library.
 
@@ -70,21 +70,21 @@ sudo apt-get install poppler-utils
 
 To verify that `pdftotext` is properly installed, open a terminal and enter `pdftotext -v`. You should see the version information.
 
-## Project Setup
+## 🚀 Project Setup
 
-### Install
+### 📥 Install
 
 ```bash
 npm install
 ```
 
-### Development
+### 👨‍💻 Development
 
 ```bash
 npm run dev
 ```
 
-### Build
+### 🧱 Build
 
 ```bash
 # For windows
