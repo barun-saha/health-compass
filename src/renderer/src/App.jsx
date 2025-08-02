@@ -310,6 +310,19 @@ function App() {
   }, [chat, isLoading])
 
   useEffect(() => {
+    const messageCount = chat.length - 1 // Exclude system prompt
+    if (messageCount === 14) {
+      setSnackbarMessage('You can ask 3 more queries.')
+      setSnackbarSeverity('info')
+      setSnackbarOpen(true)
+    } else if (messageCount >= 20) {
+      setSnackbarMessage('You have reached the maximum message limit for this session.')
+      setSnackbarSeverity('info')
+      setSnackbarOpen(true)
+    }
+  }, [chat])
+
+  useEffect(() => {
     const init = async () => {
       try {
         await window.electronAPI.initializeOllama()
@@ -327,6 +340,14 @@ function App() {
   }, [])
 
   const handleSend = async () => {
+    const messageCount = chat.length - 1
+    if (messageCount >= 20) {
+      setSnackbarMessage('You have reached the maximum message limit for this session.')
+      setSnackbarSeverity('info')
+      setSnackbarOpen(true)
+      return
+    }
+
     // Input must not be empty
     if (!input.trim()) {
       setSnackbarMessage('Please enter a message')
@@ -629,7 +650,7 @@ function App() {
                 <Button
                   variant="contained"
                   onClick={handleSend}
-                  disabled={isLoading}
+                  disabled={isLoading || chat.length - 1 >= 20}
                   sx={{ minWidth: '80px' }}
                 >
                   {isLoading ? '...' : 'Send'}
