@@ -10,7 +10,7 @@ const api = {
   // Database
   insertDummyData: (data) => ipcRenderer.invoke('insert-dummy-data', data),
   getAllMetrics: () => ipcRenderer.invoke('get-all-metrics'),
-  queryMetrics: () => ipcRenderer.invoke('query-metrics'),
+  queryMetrics: (data) => ipcRenderer.invoke('query-metrics', data),
 
   // File system
   openPdfFile: () => ipcRenderer.invoke('dialog:openPdfFile'),

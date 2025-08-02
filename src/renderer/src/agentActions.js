@@ -145,10 +145,20 @@ const handleQuery = async (entities) => {
     }
 
     // Format the response based on the query result
-    let response = `Here are the results for "${metric_type}":\n`
-    queryResult.forEach((row) => {
-      response += `- ${row.date} ${row.time}: ${row.value} ${row.unit}\n`
-    })
+    let response
+    if (aggregate) {
+      response = `The ${aggregate} for "${metric_type}" is:\n`
+      queryResult.forEach((row) => {
+        // Round aggregate values to 2 decimal places if they are numbers
+        const value = typeof row.value === 'number' ? row.value.toFixed(2) : row.value
+        response += `- ${value} ${row.unit || ''}\n`
+      })
+    } else {
+      response = `Here are your records for "${metric_type}":\n`
+      queryResult.forEach((row) => {
+        response += `- ${row.date} at ${row.time || 'N/A'}: ${row.value} ${row.unit || ''}\n`
+      })
+    }
 
     return response
   } catch (error) {

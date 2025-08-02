@@ -68,15 +68,30 @@ const insertDummyData = async (data) => {
 // Use the entities to construct a parameterized SQL query string to query the SQLite database
 const queryMetrics = async ({ metric_type, aggregate, date_start, date_end }) => {
   return new Promise((resolve, reject) => {
-    let query = `SELECT * FROM metrics WHERE metric_type = ?`
+    let query
     const params = [metric_type]
+
+    // Base query to filter by metric_type and optionally date range
+    let baseQuery = `SELECT * FROM metrics WHERE metric_type = ?`
     if (date_start && date_end) {
-      query += ` AND date BETWEEN ? AND ?`
+      baseQuery += ` AND date BETWEEN ? AND ?`
       params.push(date_start, date_end)
     }
+
     if (aggregate) {
-      query = `SELECT ${aggregate}(value) AS value, unit, date, time FROM (${query}) GROUP BY date, time, unit`
+      const allowedAggregates = ['min', 'max', 'avg', 'count']
+      if (!allowedAggregates.includes(aggregate)) {
+        return reject(new Error(`Unsupported aggregate function: ${aggregate}`))
+      }
+
+      // For aggregation, we cast value to a number, except for 'count'
+      const valueExpression = aggregate === 'count' ? 'value' : 'CAST(value AS REAL)'
+      query = `SELECT ${aggregate}(${valueExpression}) AS value, unit FROM (${baseQuery}) GROUP BY unit`
+    } else {
+      // For non-aggregate queries, select individual records
+      query = baseQuery
     }
+
     console.log('Executing query:', query, 'with params:', params)
 
     db.all(query, params, (err, rows) => {
@@ -183,7 +198,7 @@ app.whenReady().then(async () => {
   ipcMain.handle('dialog:openPdfFile', handleOpenPdfFile)
 
   // IPC for database query
-  ipcMain.handle('query-metrics', queryMetrics)
+  ipcMain.handle('query-metrics', (_, data) => queryMetrics(data))
 
   createWindow()
 
