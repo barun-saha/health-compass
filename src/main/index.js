@@ -13,7 +13,7 @@ const db = new sqlite3.Database(dbPath, (err) => {
   if (err) {
     console.error('Database connection error:', err.message)
   } else {
-    console.log('Connected to the SQLite database.')
+    console.log('Connected to the SQLite database:', dbPath)
   }
 })
 
@@ -21,28 +21,23 @@ const db = new sqlite3.Database(dbPath, (err) => {
 const initDatabase = async () => {
   return new Promise((resolve, reject) => {
     db.serialize(() => {
-      db.run('DROP TABLE IF EXISTS metrics', (err) => {
-        if (err) {
-          return reject('Error dropping metrics table: ' + err.message)
-        }
-      })
       db.run(
-        `CREATE TABLE metrics (
-              id INTEGER PRIMARY KEY AUTOINCREMENT,
-              metric_type TEXT NOT NULL,
-              value TEXT NOT NULL,
-              unit TEXT,
-              date TEXT,
-              time TEXT,
-              subtype TEXT,
-              notes TEXT,
-              timestamp DATETIME NOT NULL
-            )`,
+        `CREATE TABLE IF NOT EXISTS metrics (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          metric_type TEXT NOT NULL,
+          value TEXT NOT NULL,
+          unit TEXT,
+          date TEXT,
+          time TEXT,
+          subtype TEXT,
+          notes TEXT,
+          timestamp DATETIME NOT NULL
+        )`,
         (err) => {
           if (err) {
             reject('Error creating metrics table: ' + err.message)
           } else {
-            resolve('DB Status: Metrics table created/reset successfully.')
+            resolve('DB Status: Metrics table exists/created successfully.')
           }
         }
       )
@@ -76,6 +71,7 @@ const getAllMetrics = async () => {
       if (err) {
         reject('Error fetching metrics: ' + err.message)
       } else {
+        console.log('Fetched metrics:', rows)
         resolve(rows)
       }
     })
