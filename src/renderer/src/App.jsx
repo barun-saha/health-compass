@@ -127,7 +127,7 @@ Available Intents and their required entities, along with some examples:
    The database table schema is as follows:
       CREATE TABLE metrics (
         metric_type TEXT NOT NULL,
-        value TEXT NOT NULL,
+        value REAL NOT NULL,
         unit TEXT,
         date TEXT,
         time TEXT,

@@ -25,7 +25,7 @@ const initDatabase = async () => {
         `CREATE TABLE IF NOT EXISTS metrics (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           metric_type TEXT NOT NULL,
-          value TEXT NOT NULL,
+          value REAL NOT NULL,
           unit TEXT,
           date TEXT,
           time TEXT,
@@ -73,9 +73,8 @@ const queryMetrics = async ({ metric_type, aggregate, date_start, date_end }) =>
         throw new Error(`Unsupported aggregate function: ${aggregate}`)
       }
 
-      // Cast value to a number for numerical aggregates, except for 'count'
-      const valueExpression = aggregate.toLowerCase() === 'count' ? 'value' : 'CAST(value AS REAL)'
-      query = `SELECT ${aggregate}(${valueExpression}) AS value, unit FROM (${baseQuery}) GROUP BY unit`
+      // The 'value' column is now numeric, so no casting is needed.
+      query = `SELECT ${aggregate}(value) AS value, unit FROM (${baseQuery}) GROUP BY unit`
     } else {
       // Non-aggregate query, just use the base query
       query = baseQuery

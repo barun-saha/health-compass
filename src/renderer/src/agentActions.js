@@ -140,42 +140,77 @@ const resolveRelativeTime = (timeString) => {
 
 /**
  * Logs a health metric to the database via an IPC call.
+ * It handles composite values like blood pressure by splitting them into separate entries.
  * @param {Object} entities An object containing the metric data.
  * @returns {Promise<string>} A promise that resolves to a confirmation or error message.
  */
 const handleLogHealthMetric = async (entities) => {
   const { metric_type, value, unit, date, time, subtype, notes } = entities
 
-  // Use a try-catch block for IPC operations
   try {
-    // Ensure all required fields are present
     if (!metric_type || !value) {
       throw new Error('Metric type and value are required.')
     }
 
-    // Resolve date and time
     const resolvedDate = date ? resolveRelativeDate(date) : resolveRelativeDate('today')
-    const resolvedTime = time ? resolveRelativeTime(time) : 'now' // 'now' can be resolved by the main process or kept as a string for insertion
+    const resolvedTime = time ? resolveRelativeTime(time) : 'now'
 
-    // Construct the payload for the IPC call
-    const metricData = {
-      metric_type,
-      value,
-      unit: unit || null,
-      date: resolvedDate,
-      time: resolvedTime,
-      subtype: subtype || null,
-      notes: notes || null
+    // Special handling for blood pressure, which comes in as "systolic/diastolic"
+    if (metric_type === 'blood_pressure' && typeof value === 'string' && value.includes('/')) {
+      const [systolic, diastolic] = value.split('/')
+      if (!systolic || !diastolic || isNaN(systolic) || isNaN(diastolic)) {
+        throw new Error(`Invalid blood pressure value: ${value}. Expected "systolic/diastolic".`)
+      }
+
+      const systolicData = {
+        metric_type,
+        value: parseFloat(systolic.trim()),
+        unit: unit || 'mmHg',
+        date: resolvedDate,
+        time: resolvedTime,
+        subtype: 'systolic',
+        notes: notes || null
+      }
+      const diastolicData = {
+        metric_type,
+        value: parseFloat(diastolic.trim()),
+        unit: unit || 'mmHg',
+        date: resolvedDate,
+        time: resolvedTime,
+        subtype: 'diastolic',
+        notes: notes || null
+      }
+
+      // Insert both metrics concurrently and combine their results
+      const results = await Promise.all([
+        window.electronAPI.insertMetric(systolicData),
+        window.electronAPI.insertMetric(diastolicData)
+      ])
+
+      return results.join('\n')
+    } else {
+      // For all other metrics, ensure the value is numeric
+      const numericValue = parseFloat(value)
+      if (isNaN(numericValue)) {
+        throw new Error(`Invalid numeric value provided: "${value}"`)
+      }
+
+      const metricData = {
+        metric_type,
+        value: numericValue,
+        unit: unit || null,
+        date: resolvedDate,
+        time: resolvedTime,
+        subtype: subtype || null,
+        notes: notes || null
+      }
+
+      console.log('Sending metric data via IPC:', metricData)
+      const result = await window.electronAPI.insertMetric(metricData)
+
+      console.log(result)
+      return result
     }
-
-    console.log('Sending metric data via IPC:', metricData)
-
-    // Await the IPC call to insert the metric.
-    // We assume 'window.electronAPI.insertMetric' is exposed via the preload script.
-    const result = await window.electronAPI.insertMetric(metricData)
-
-    console.log(result)
-    return result
   } catch (error) {
     console.error('Error logging health metric:', error.message)
     return 'I am unable to log the metric with the provided information. Please be more specific or try again.'
@@ -218,7 +253,7 @@ const handleQuery = async (entities) => {
     } else {
       response = `Here are your records for "${metric_type}":\n`
       queryResult.forEach((row) => {
-        response += `- ${row.date} at ${row.time || 'N/A'}: ${row.value} ${row.unit || ''}\n`
+        response += `- ${row.date} at ${row.time || 'N/A'}: ${row.subtype ? row.subtype + ' ' : ''}${row.value} ${row.unit || ''}\n`
       })
     }
 
