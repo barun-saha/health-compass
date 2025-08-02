@@ -191,7 +191,6 @@ function App() {
   const theme = useMemo(() => (darkMode ? darkTheme : lightTheme), [darkMode])
 
   // ADDED: State for DB Status and Metrics
-  const [dbStatus, setDbStatus] = useState('Not Connected')
   const [metrics, setMetrics] = useState([])
 
   const [chat, setChat] = useState([{ role: 'system', content: SYSTEM_PROMPT }])
@@ -231,22 +230,6 @@ function App() {
   }, [])
 
   // Functions for database interaction
-  const handleInitDb = async () => {
-    try {
-      setDbStatus('Initializing...')
-      const response = await window.electronAPI.initDatabase()
-      setDbStatus(response)
-      setSnackbarMessage(response)
-      setSnackbarSeverity('success')
-    } catch (err) {
-      setDbStatus('Error')
-      setSnackbarMessage(`DB Error: ${err}`)
-      setSnackbarSeverity('error')
-      console.error('DB Initialization Error:', err)
-    } finally {
-      setSnackbarOpen(true)
-    }
-  }
 
   const handleInsertData = async () => {
     try {
@@ -453,11 +436,7 @@ function App() {
           </Box>
 
           <Box sx={{ mb: 2 }}>
-            <Typography variant="h6">DB Status: {dbStatus}</Typography>
             <Stack direction="row" spacing={1} sx={{ my: 1 }}>
-              <Button variant="contained" size="small" onClick={handleInitDb}>
-                Init DB
-              </Button>
               <Button variant="contained" size="small" onClick={handleInsertData}>
                 Insert Dummy Data
               </Button>

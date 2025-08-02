@@ -8,7 +8,6 @@ const api = {
   generateOllama: (data) => ipcRenderer.invoke('generate-ollama', data),
 
   // Database
-  initDatabase: () => ipcRenderer.invoke('init-database'),
   insertDummyData: (data) => ipcRenderer.invoke('insert-dummy-data', data),
   getAllMetrics: () => ipcRenderer.invoke('get-all-metrics'),
 

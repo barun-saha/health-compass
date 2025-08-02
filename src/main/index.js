@@ -118,15 +118,22 @@ async function handleOpenPdfFile() {
   }
 }
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   electronApp.setAppUserModelId('com.electron')
 
   app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window)
   })
 
+  // Initialize database on startup
+  try {
+    const dbStatus = await initDatabase()
+    console.log(dbStatus)
+  } catch (err) {
+    console.error(err)
+  }
+
   // IPC handler for the database
-  ipcMain.handle('init-database', initDatabase)
   ipcMain.handle('insert-dummy-data', (_, data) => insertDummyData(data))
   ipcMain.handle('get-all-metrics', getAllMetrics)
 
