@@ -203,6 +203,19 @@ const PlanSchema = z.object({
 })
 
 /**
+ * Formats the chat history into a string for the LLM prompt.
+ * @param {Array<Object>} chat - The chat history array.
+ * @returns {string} The formatted chat history string.
+ */
+const formatChatHistory = (chat) => {
+  // Exclude the system prompt.
+  return chat
+    .slice(1)
+    .map((msg) => `<${msg.role}>${msg.content}</${msg.role}>`)
+    .join('\n')
+}
+
+/**
  * Formats a template string by replacing placeholders with corresponding values.
  * @param {string} template - The template string containing placeholders in the format {key}.
  * @param {Object} values - An object containing key-value pairs to replace in the template.
@@ -217,13 +230,15 @@ function formatTemplate(template, values) {
 /**
  * Get a plan based on the user's input using Ollama.
  * @param {string} input - The user's input query.
+ * @param {string} history - The conversation history.
  * @returns {Promise<Object>} The parsed plan object.
  */
-const getPlan = async (input) => {
+const getPlan = async (input, history) => {
   const ollamaResponseString = await generateOllama(
     formatTemplate(PLANNER_SYSTEM_PROMPT, {
       time: String(new Date()),
-      query: input
+      query: input,
+      history: history
     }),
     config.llm.model,
     false,
@@ -327,8 +342,11 @@ function App() {
       : input
 
     try {
-      // Add user message
+      // The user message is created here to be included in the history for the planner
       const userMessage = { role: 'user', content: messageContent }
+      const chatHistoryString = formatChatHistory([...chat, userMessage])
+
+      // Add user message to the chat
       setChat((prev) => [...prev, userMessage])
       setInput('')
       // Note: we don't clear the selectedPdf state here, we clear it after the request
@@ -356,7 +374,7 @@ function App() {
         }
       } else {
         // No PDF, proceed with the normal planning step.
-        plan = await getPlan(messageContent)
+        plan = await getPlan(messageContent, chatHistoryString)
       }
 
       console.log('Plan:', plan)
@@ -380,9 +398,9 @@ function App() {
 
       if (handler) {
         if (handler.isAsync) {
-          response = await handler.func(entities)
+          response = await handler.func(entities, chatHistoryString)
         } else {
-          response = handler.func(entities)
+          response = handler.func(entities, chatHistoryString)
         }
         console.log('Handler response:', response)
       } else {

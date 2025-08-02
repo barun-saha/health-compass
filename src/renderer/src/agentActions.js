@@ -48,17 +48,19 @@ Report Text:
 `
 
 // Define functions to handle each of the intents
-const handleGreeting = (entities) => {
+const handleGreeting = (entities, history) => {
   return 'Hello! How can I assist you today?'
 }
 
-const handleDirectResponse = async (entities) => {
-  const query = entities.query || 'Hi, how can I help you?'
-  const llmResponse = await generateOllama(query, config.llm.model, false, 0, null)
+const handleDirectResponse = async (entities, history) => {
+  // For this handler, the history IS the prompt, as it contains the full conversation
+  // including the latest user query. The planner uses `entities.query` just to identify
+  // the intent, but we use the full history for a contextual response.
+  const llmResponse = await generateOllama(history, config.llm.model, false, 0, null)
   return llmResponse
 }
 
-const handleExplainPdfReport = async (entities) => {
+const handleExplainPdfReport = async (entities, history) => {
   const { pdf_file_path: filePath, query } = entities
   console.log('Received intent to explain PDF report:', { filePath, query })
 
@@ -144,7 +146,7 @@ const resolveRelativeTime = (timeString) => {
  * @param {Object} entities An object containing the metric data.
  * @returns {Promise<string>} A promise that resolves to a confirmation or error message.
  */
-const handleLogHealthMetric = async (entities) => {
+const handleLogHealthMetric = async (entities, history) => {
   const { metric_type, value, unit, date, time, subtype, notes } = entities
 
   try {
@@ -217,7 +219,7 @@ const handleLogHealthMetric = async (entities) => {
   }
 }
 
-const handleQuery = async (entities) => {
+const handleQuery = async (entities, history) => {
   const { metric_type, aggregate, date_start, date_end } = entities || {}
   console.log('Received query intent:', {
     metric_type,
@@ -277,7 +279,7 @@ const handleQuery = async (entities) => {
   // return 'Not yet implemented.'
 }
 
-const handleUnsure = () => {
+const handleUnsure = (entities, history) => {
   return "I'm not sure how to respond to that. Please ask a health-related question."
 }
 
