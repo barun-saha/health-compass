@@ -63,7 +63,7 @@ Available Intents and their required entities:
 4. **LOG_HEALTH_METRIC**: User wants to record a specific health measurement. This requires extracting precise data points.
   * **entities**:
     * \`metric_type\`: (string) The type of health measurement (e.g., 'blood_pressure', 'blood_sugar', 'weight', 'temperature', 'sleep_duration', 'heart_rate').
-    * \`value\`: (string) The raw value provided by the user (e.g., "120/80", "99.2", "75 kg", "8 hours").
+    * \`value\`: (string) The raw value provided by the user (e'g., "120/80", "99.2", "75 kg", "8 hours").
     * \`unit\`: (string, optional) The unit of measurement (e.g., "mmHg", "mg/dL", "kg", "celsius", "fahrenheit", "hours", "bpm"). Infer if not explicitly stated (e.g., 'mmHg' for BP).
     * \`date\`: (string, optional) The date of the measurement (YYYY-MM-DD format). Default to "today" if not specified. Convert relative terms like "yesterday", "tomorrow" to absolute dates.
     * \`time\`: (string, optional) The time of the measurement (HH:MM:SS format). Default to "now" if not specified. Convert relative terms like "morning", "evening" to precise times.
@@ -110,7 +110,7 @@ const PlanSchema = z.object({
 
 /**
  * Formats a template string by replacing placeholders with corresponding values.
- * * @param {string} template - The template string containing placeholders in the format {key}.
+ * @param {string} template - The template string containing placeholders in the format {key}.
  * @param {Object} values - An object containing key-value pairs to replace in the template.
  * @return {string} The formatted string with placeholders replaced by actual values.
  */
@@ -122,9 +122,9 @@ function formatTemplate(template, values) {
 
 /**
  * Get a plan based on the user's input using Ollama.
- * * @param {string} input - The user's input query.
+ * @param {string} input - The user's input query.
  * @returns {Promise<Object>} The parsed plan object.
- * */
+ */
 const getPlan = async (input) => {
   const ollamaResponseString = await generateOllama(
     formatTemplate(PLANNER_SYSTEM_PROMPT, {
@@ -265,19 +265,16 @@ function App() {
     const timeoutId = setTimeout(() => controller.abort(), config.llm.timeout)
 
     // Build the message content based on whether a PDF is attached
-    const messageContent = selectedPdf
-      ? `${input}\n\npdf_file_path:\n${selectedPdf.filePath}`
-      : input
-
-    // Validate file size is no longer needed here, as the dialog doesn't provide it
-    // The main process will do the validation if needed before extracting.
+    // This is for display purposes, the actual logic will use the 'selectedPdf' state
+    const messageContent = selectedPdf ? `${input}\n\nPDF file attached: ${selectedPdf.fileName}` : input
 
     try {
       // Add user message
       const userMessage = { role: 'user', content: messageContent }
       setChat((prev) => [...prev, userMessage])
       setInput('')
-      setSelectedPdf(null) // Clear the selected PDF state
+      // Note: we don't clear the selectedPdf state here, we clear it after the request
+      // is processed to make sure the agent has access to it.
 
       // Set loading state for the progress indicator
       setIsLoading(true)
@@ -299,7 +296,6 @@ function App() {
             pdf_file_path: selectedPdf.filePath
           }
         }
-        setSelectedPdf(null) // Clear the state after use
       } else {
         // No PDF, proceed with the normal planning step.
         plan = await getPlan(messageContent)
@@ -360,6 +356,7 @@ function App() {
       clearTimeout(timeoutId)
       setIsLoading(false)
       setPlanningStatus('idle')
+      setSelectedPdf(null)
     }
   }
 
@@ -370,11 +367,18 @@ function App() {
     }
   }
 
-  // New function to handle the file dialog
+  // Function to handle the file dialog using a pure JavaScript solution
   const handleOpenPdfFile = async () => {
-    const file = await window.electronAPI.openPdfFile()
-    if (file) {
-      setSelectedPdf(file)
+    try {
+      const filePath = await window.electronAPI.openPdfFile()
+      if (filePath) {
+        // Use a simple JavaScript method to get the filename from the path
+        const fileName = filePath.split(/[\\/]/).pop()
+        setSelectedPdf({ filePath, fileName })
+        console.log('Selected PDF file path:', filePath, 'Filename:', fileName)
+      }
+    } catch (error) {
+      console.error('Error opening file dialog:', error)
     }
   }
 
@@ -446,9 +450,9 @@ function App() {
           <Box
             sx={{
               mb: 2,
-              height: 'calc(100vh - 310px)',
+              height: 'calc(100vh - 250px)',
               overflowY: 'auto',
-              paddingBottom: '110px'
+              paddingBottom: '64px'
             }}
           >
             {chat.slice(1).map((msg, idx) => (
@@ -463,6 +467,7 @@ function App() {
                   sx={{
                     padding: '2px 8px',
                     maxWidth: '80%',
+                    marginBottom: '8px',
                     backgroundColor: msg.role === 'user' ? 'chat.user' : 'chat.assistant'
                   }}
                 >
@@ -573,8 +578,7 @@ function App() {
                 sx={{ textAlign: 'center', mt: 1 }}
               >
                 Disclaimer: AI-generated content may contain inaccuracies or outdated information.
-                Always verify with trusted sources/healthcare professionals before making decisions
-                based on it.
+                Always verify with trusted sources/healthcare professionals.
               </Typography>
             </Box>
           </Paper>

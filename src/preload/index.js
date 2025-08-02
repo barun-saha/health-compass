@@ -1,5 +1,3 @@
-// src/preload/index.js
-
 import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
 
@@ -7,6 +5,7 @@ import { electronAPI } from '@electron-toolkit/preload'
 const api = {
   // Ollama
   initializeOllama: () => ipcRenderer.invoke('initialize-ollama'),
+  generateOllama: (data) => ipcRenderer.invoke('generate-ollama', data),
 
   // Database
   initDatabase: () => ipcRenderer.invoke('init-database'),
@@ -15,7 +14,7 @@ const api = {
 
   // File system
   openPdfFile: () => ipcRenderer.invoke('dialog:openPdfFile'),
-  readPdfFile: (filePath) => ipcRenderer.invoke('read-pdf-file', filePath)
+  readPdfFile: (filePath) => ipcRenderer.invoke('read-pdf-file', filePath) // <-- Update this handler
 }
 
 // Use `contextBridge` to expose provided APIs to the renderer

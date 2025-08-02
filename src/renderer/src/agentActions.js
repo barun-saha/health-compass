@@ -23,18 +23,21 @@ export const generateOllama = async (
 
 // System prompt for explaining a PDF report
 const EXPLAIN_REPORT_PROMPT = `
-You are a helpful health assistant. You can accurately interpret lab test results, e.g., blood test reports and others.
-Your task is to explain a medical report to the user in simple, easy-to-understand language.
-- Start with a general overview of the report's purpose, what is tests.
-- Correctly identify the metioned values and report them faithfully.
-- Highlight any key findings or values that are outside the normal range.
-- Explain what these findings might mean, but **do not provide a diagnosis**.
-- Always recommend that the user consult a healthcare professional for a proper interpretation.
+You are a helpful health assistant.
+You can accurately interpret lab test results, e.g., blood test reports and others.
+Your task is to explain medical reports to the user in simple, easy-to-understand language.
+- Start with a general overview of the report's purpose, what tests.
+- Correctly identify the test result values (and referene values, where available) and report them faithfully.
+- Highlight any key findings or values that are outside the normal/reference range.
+- Explain what these results/findings might mean, but **do not provide a diagnosis**.
 - Be clear and factual, avoiding medical jargon. Do NOT make up any information.
+- Always recommend that the user consult a healthcare professional for a proper interpretation.
 
-Note: Sometimes text extracted from the report may be improperly formatted or contain errors.
+Note: Sometimes text extracted from the PDF reports may be improperly formatted. misaligned, or contain errors.
 E.g., a number "78" might appear as "7 8". Or report headers, measured values, and reference values might be misaligned.
-- If you encounter such issues, do your best to interpret the text correctly.
+Or sometimes a row of results might be split into two lines.
+- In such cases, do your best to interpret the text correctly.
+- If you are unable to interpret the text, inform the user that you cannot explain the report. NEVER misinterpret.
 
 User's original query: {query}
 
@@ -57,6 +60,7 @@ const handleDirectResponse = async (entities) => {
 
 const handleExplainPdfReport = async (entities) => {
   const { pdf_file_path: filePath, query } = entities
+  console.log('Received intent to explain PDF report:', { filePath, query })
 
   // Check if the file path is valid
   if (!filePath) {
@@ -66,14 +70,14 @@ const handleExplainPdfReport = async (entities) => {
 
   try {
     console.log('Extracting text from PDF:', filePath)
-    const reportText = await window.electronAPI.extractPdfText(filePath)
+    const reportText = await window.electronAPI.readPdfFile(filePath)
 
     // Check if text was successfully extracted
     if (!reportText) {
       return 'I was unable to extract any text from the provided PDF file. Please ensure the file is not corrupted or password-protected.'
     }
 
-    console.log('Extracted PDF text length:', reportText.length)
+    console.log('Extracted PDF text:', reportText)
 
     // Construct the new prompt for Ollama with the extracted text
     const prompt = EXPLAIN_REPORT_PROMPT.replace(
@@ -81,9 +85,8 @@ const handleExplainPdfReport = async (entities) => {
       query || 'Explain this report.'
     ).replace('{reportText}', reportText)
 
-    console.log('Sending new prompt to Ollama for explanation:', prompt)
     const ollamaResponse = await generateOllama(prompt, config.llm.model, false, 0, null)
-    console.log('Ollama response:', ollamaResponse)
+    console.log('Ollama response length:', ollamaResponse.length)
 
     return (
       ollamaResponse || 'Sorry, but I was unable to explain the report. Please try again later.'

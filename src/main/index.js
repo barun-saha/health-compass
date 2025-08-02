@@ -1,10 +1,11 @@
-import { app, shell, BrowserWindow, ipcMain } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, dialog } from 'electron'
 import { join } from 'node:path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import sqlite3 from 'sqlite3'
-
 import icon from '../../resources/icon.png?asset'
+
 import { initializeOllama } from './ollamaHelper'
+import { readPdfFile } from './pdfHelper'
 
 // Database setup
 const dbPath = join(app.getPath('userData'), 'health_data.db')
@@ -66,8 +67,10 @@ const getAllMetrics = async () => {
   })
 }
 
+/**
+ * Creates the main browser window.
+ */
 function createWindow() {
-  // Create the browser window
   const mainWindow = new BrowserWindow({
     width: 900,
     height: 670,
@@ -92,34 +95,6 @@ function createWindow() {
     return { action: 'deny' }
   })
 
-  // Set a comprehensive Content Security Policy
-  const csp = `
-    default-src 'self' 'unsafe-inline'; 
-    script-src 'self' 'unsafe-eval' 'unsafe-inline';
-    style-src 'self' 'unsafe-inline';
-    img-src 'self' data:;
-    connect-src 'self' http://127.0.0.1:11434;
-  `
-  mainWindow.webContents.session.webRequest.onHeadersReceived((details, callback) => {
-    callback({
-      responseHeaders: {
-        ...details.responseHeaders,
-        'Content-Security-Policy': [csp]
-      }
-    })
-  })
-
-  mainWindow.on('ready-to-show', () => {
-    mainWindow.show()
-  })
-
-  mainWindow.webContents.setWindowOpenHandler((details) => {
-    shell.openExternal(details.url)
-    return { action: 'deny' }
-  })
-
-  // HMR for renderer base on electron-vite cli.
-  // Load the remote URL for development or the local html file for production.
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
     mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
   } else {
@@ -127,13 +102,25 @@ function createWindow() {
   }
 }
 
+/**
+ * Handles the file open dialog to select a PDF file.
+ * @returns {Promise<string | undefined>} A promise that resolves with the selected file path, or undefined if canceled.
+ */
+async function handleOpenPdfFile() {
+  const { canceled, filePaths } = await dialog.showOpenDialog({
+    properties: ['openFile'],
+    filters: [{ name: 'PDF Files', extensions: ['pdf'] }]
+  })
+  if (canceled) {
+    return
+  } else {
+    return filePaths[0]
+  }
+}
+
 app.whenReady().then(() => {
-  // Set app user model id for windows
   electronApp.setAppUserModelId('com.electron')
 
-  // Default open or close DevTools by F12 in development
-  // and ignore CommandOrControl + R in production.
-  // see https://github.com/alex8088/electron-toolkit/tree/master/packages/utils
   app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window)
   })
@@ -147,7 +134,10 @@ app.whenReady().then(() => {
   ipcMain.handle('initialize-ollama', initializeOllama)
 
   // IPC handler for PDF reading
-  // ipcMain.handle('read-pdf-file', (_, filePath) => readPdfFile(filePath))
+  ipcMain.handle('read-pdf-file', (_, filePath) => readPdfFile(filePath))
+
+  // IPC handler for opening a file dialog
+  ipcMain.handle('dialog:openPdfFile', handleOpenPdfFile)
 
   createWindow()
 
