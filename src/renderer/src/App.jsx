@@ -408,10 +408,10 @@ function App() {
 
           <Box
             sx={{
-              mb: 2,
+              mb: 1,
               height: 'calc(100vh - 250px)',
               overflowY: 'auto',
-              paddingBottom: '64px'
+              paddingBottom: '32px'
             }}
           >
             {chat.slice(1).map((msg, idx) => (
@@ -495,7 +495,9 @@ function App() {
                     color: 'grey.600'
                   }}
                 >
-                  📎
+                  <span style={{ fontSize: '1.6em' }} title="Attach PDF file">
+                    📎
+                  </span>
                 </Button>
                 {selectedPdf && (
                   <Typography variant="caption" color="grey.600">
