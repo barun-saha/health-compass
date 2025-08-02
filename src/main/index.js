@@ -65,44 +65,62 @@ const insertDummyData = async (data) => {
   })
 }
 
-// Use the entities to construct a parameterized SQL query string to query the SQLite database
+/**
+ * Asynchronously queries the metrics database with dynamic parameters.
+ * @param {Object} entities An object containing query parameters.
+ * @param {string} entities.metric_type The type of metric to query. Required.
+ * @param {string} [entities.aggregate] An optional aggregation function ('min', 'max', 'avg', 'count').
+ * @param {string} [entities.date_start] Optional start date for the query (YYYY-MM-DD).
+ * @param {string} [entities.date_end] Optional end date for the query (YYYY-MM-DD).
+ * @returns {Promise<Array<Object>>} A promise that resolves to an array of result rows.
+ */
 const queryMetrics = async ({ metric_type, aggregate, date_start, date_end }) => {
-  return new Promise((resolve, reject) => {
+  try {
     let query
     const params = [metric_type]
 
-    // Base query to filter by metric_type and optionally date range
+    // Build the base query string and parameters
     let baseQuery = `SELECT * FROM metrics WHERE metric_type = ?`
     if (date_start && date_end) {
       baseQuery += ` AND date BETWEEN ? AND ?`
       params.push(date_start, date_end)
     }
 
+    // Handle aggregation or default to a simple select
     if (aggregate) {
       const allowedAggregates = ['min', 'max', 'avg', 'count']
-      if (!allowedAggregates.includes(aggregate)) {
-        return reject(new Error(`Unsupported aggregate function: ${aggregate}`))
+      if (!allowedAggregates.includes(aggregate.toLowerCase())) {
+        throw new Error(`Unsupported aggregate function: ${aggregate}`)
       }
 
-      // For aggregation, we cast value to a number, except for 'count'
-      const valueExpression = aggregate === 'count' ? 'value' : 'CAST(value AS REAL)'
+      // Cast value to a number for numerical aggregates, except for 'count'
+      const valueExpression = aggregate.toLowerCase() === 'count' ? 'value' : 'CAST(value AS REAL)'
       query = `SELECT ${aggregate}(${valueExpression}) AS value, unit FROM (${baseQuery}) GROUP BY unit`
     } else {
-      // For non-aggregate queries, select individual records
+      // Non-aggregate query, just use the base query
       query = baseQuery
     }
 
     console.log('Executing query:', query, 'with params:', params)
 
-    db.all(query, params, (err, rows) => {
-      if (err) {
-        reject('Error querying metrics: ' + err.message)
-      } else {
-        console.log('Query result:', rows)
-        resolve(rows)
-      }
+    // Await the database call. The `await` keyword simplifies the asynchronous flow.
+    const rows = await new Promise((resolve, reject) => {
+      db.all(query, params, (err, rows) => {
+        if (err) {
+          reject('Error querying metrics: ' + err.message)
+        } else {
+          resolve(rows)
+        }
+      })
     })
-  })
+
+    console.log('Query result:', rows)
+    return rows
+  } catch (error) {
+    console.error('Error in queryMetrics:', error.message)
+    // Rethrow the error so the caller can handle it
+    throw error
+  }
 }
 
 const getAllMetrics = async () => {
