@@ -8,7 +8,7 @@ import { initializeOllama } from './ollamaHelper'
 import { readPdfFile } from './pdfHelper'
 
 // Database setup
-const dbPath = join(app.getPath('userData'), 'health_data.db')
+const dbPath = join(app.getPath('userData'), 'health_compass.db')
 const db = new sqlite3.Database(dbPath, (err) => {
   if (err) {
     console.error('Database connection error:', err.message)
@@ -31,7 +31,7 @@ const initDatabase = async () => {
           time TEXT,
           subtype TEXT,
           notes TEXT,
-          timestamp DATETIME NOT NULL
+          timestamp TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
         )`,
         (err) => {
           if (err) {
@@ -42,26 +42,6 @@ const initDatabase = async () => {
         }
       )
     })
-  })
-}
-
-const insertDummyData = async (data) => {
-  return new Promise((resolve, reject) => {
-    const { metric_type, value, unit, date, time, subtype, notes } = data
-    const timestamp = new Date().toISOString()
-
-    db.run(
-      `INSERT INTO metrics (metric_type, value, unit, date, time, subtype, notes, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [metric_type, value, unit, date, time, subtype, notes, timestamp],
-      function (err) {
-        if (err) {
-          reject('Error inserting data: ' + err.message)
-        } else {
-          console.log(`Data inserted with ID: ${this.lastID}`, data)
-          resolve(`DB Status: Data inserted with ID: ${this.lastID}`)
-        }
-      }
-    )
   })
 }
 
@@ -123,14 +103,42 @@ const queryMetrics = async ({ metric_type, aggregate, date_start, date_end }) =>
   }
 }
 
-const getAllMetrics = async () => {
-  return new Promise((resolve, reject) => {
-    db.all(`SELECT * FROM metrics`, [], (err, rows) => {
+/**
+ * Inserts a new health metric into the database.
+ * @param {Object} metricData The data to insert.
+ * @returns {Promise<string>} A promise that resolves with a success message or rejects with an error.
+ */
+const insertMetric = async (metricData) => {
+  return await new Promise((resolve, reject) => {
+    // A safe, parameterized SQL INSERT query
+    const sql = `
+      INSERT INTO metrics (metric_type, value, unit, date, time, subtype, notes)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `
+
+    const params = [
+      metricData.metric_type,
+      metricData.value,
+      metricData.unit,
+      metricData.date,
+      metricData.time,
+      metricData.subtype,
+      metricData.notes
+    ]
+
+    console.log('Insert query:', sql)
+    console.log('Insert query params:', params)
+
+    // Use db.run for INSERT operations with parameterized values.
+    db.run(sql, params, function (err) {
       if (err) {
-        reject('Error fetching metrics: ' + err.message)
+        console.error('Database insertion error:', err.message)
+        reject('Error logging metric: ' + err.message)
       } else {
-        console.log('Fetched metrics:', rows)
-        resolve(rows)
+        // The 'this.lastID' property holds the ID of the last inserted row.
+        const confirmationMessage = `Successfully logged ${metricData.metric_type} (${metricData.value}) with ID: ${this.lastID}`
+        console.log(confirmationMessage)
+        resolve(confirmationMessage)
       }
     })
   })
@@ -203,8 +211,9 @@ app.whenReady().then(async () => {
   }
 
   // IPC handler for the database
-  ipcMain.handle('insert-dummy-data', (_, data) => insertDummyData(data))
-  ipcMain.handle('get-all-metrics', getAllMetrics)
+  //  ipcMain.handle('get-all-metrics', getAllMetrics)
+  ipcMain.handle('query-metrics', (_, data) => queryMetrics(data))
+  ipcMain.handle('insert-metric', async (_, metricData) => insertMetric(metricData))
 
   // IPC handler for Ollama initialization
   ipcMain.handle('initialize-ollama', initializeOllama)
@@ -214,9 +223,6 @@ app.whenReady().then(async () => {
 
   // IPC handler for opening a file dialog
   ipcMain.handle('dialog:openPdfFile', handleOpenPdfFile)
-
-  // IPC for database query
-  ipcMain.handle('query-metrics', (_, data) => queryMetrics(data))
 
   createWindow()
 

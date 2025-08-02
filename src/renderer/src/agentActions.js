@@ -97,17 +97,89 @@ const handleExplainPdfReport = async (entities) => {
   }
 }
 
-const handleLogHealthMetric = (entities) => {
+// A simple function to resolve relative date strings to YYYY-MM-DD format
+const resolveRelativeDate = (dateString) => {
+  const date = new Date()
+  const lowerCaseString = dateString.toLowerCase()
+
+  if (lowerCaseString === 'yesterday') {
+    date.setDate(date.getDate() - 1)
+  } else if (lowerCaseString === 'tomorrow') {
+    date.setDate(date.getDate() + 1)
+  }
+
+  // Format the date to YYYY-MM-DD
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+
+  return `${year}-${month}-${day}`
+}
+
+// A simple function to resolve relative time strings to HH:MM:SS format
+const resolveRelativeTime = (timeString) => {
+  const date = new Date()
+  const lowerCaseString = timeString.toLowerCase()
+
+  if (lowerCaseString.includes('night')) {
+    date.setHours(21, 0, 0) // 9 PM
+  } else if (lowerCaseString.includes('morning')) {
+    date.setHours(9, 0, 0) // 9 AM
+  } else if (lowerCaseString.includes('afternoon')) {
+    date.setHours(14, 0, 0) // 2 PM
+  } else if (lowerCaseString.includes('evening')) {
+    date.setHours(18, 0, 0) // 6 PM
+  }
+
+  // Format the time to HH:MM:SS
+  const hours = String(date.getHours()).padStart(2, '0')
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+  const seconds = String(date.getSeconds()).padStart(2, '0')
+  return `${hours}:${minutes}:${seconds}`
+}
+
+/**
+ * Logs a health metric to the database via an IPC call.
+ * @param {Object} entities An object containing the metric data.
+ * @returns {Promise<string>} A promise that resolves to a confirmation or error message.
+ */
+const handleLogHealthMetric = async (entities) => {
   const { metric_type, value, unit, date, time, subtype, notes } = entities
 
-  let response = 'Thank you for providing the information. '
-  if (metric_type && value) {
-    response += `I have logged your ${metric_type} with a value of ${value}.`
-  } else {
-    response +=
-      'I am unable to log the metric with the provided information. Can you please be more specific?'
+  // Use a try-catch block for IPC operations
+  try {
+    // Ensure all required fields are present
+    if (!metric_type || !value) {
+      throw new Error('Metric type and value are required.')
+    }
+
+    // Resolve date and time
+    const resolvedDate = date ? resolveRelativeDate(date) : resolveRelativeDate('today')
+    const resolvedTime = time ? resolveRelativeTime(time) : 'now' // 'now' can be resolved by the main process or kept as a string for insertion
+
+    // Construct the payload for the IPC call
+    const metricData = {
+      metric_type,
+      value,
+      unit: unit || null,
+      date: resolvedDate,
+      time: resolvedTime,
+      subtype: subtype || null,
+      notes: notes || null
+    }
+
+    console.log('Sending metric data via IPC:', metricData)
+
+    // Await the IPC call to insert the metric.
+    // We assume 'window.electronAPI.insertMetric' is exposed via the preload script.
+    const result = await window.electronAPI.insertMetric(metricData)
+
+    console.log(result)
+    return result
+  } catch (error) {
+    console.error('Error logging health metric:', error.message)
+    return 'I am unable to log the metric with the provided information. Please be more specific or try again.'
   }
-  return response
 }
 
 const handleQuery = async (entities) => {
@@ -119,16 +191,6 @@ const handleQuery = async (entities) => {
     date_end
   })
 
-  // table schema for metrics:
-  // CREATE TABLE metrics (
-  //       metric_type TEXT NOT NULL,
-  //       value TEXT NOT NULL,
-  //       unit TEXT,
-  //       date TEXT,
-  //       time TEXT,
-  //       subtype TEXT,
-  //     )
-  
   if (!metric_type) {
     return 'Please specify a metric type to query. For example, "heart_rate", "weight", etc.'
   }
@@ -177,7 +239,7 @@ export const intentHandlers = {
   GREETING: { func: handleGreeting, isAsync: false },
   DIRECT_LLM_RESPONSE: { func: handleDirectResponse, isAsync: true },
   EXPLAIN_PDF_REPORT: { func: handleExplainPdfReport, isAsync: true },
-  LOG_HEALTH_METRIC: { func: handleLogHealthMetric, isAsync: false },
+  LOG_HEALTH_METRIC: { func: handleLogHealthMetric, isAsync: true },
   QUERY_METRICS: { func: handleQuery, isAsync: true },
   UNSURE: { func: handleUnsure, isAsync: false }
 }

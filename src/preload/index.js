@@ -8,9 +8,10 @@ const api = {
   generateOllama: (data) => ipcRenderer.invoke('generate-ollama', data),
 
   // Database
-  insertDummyData: (data) => ipcRenderer.invoke('insert-dummy-data', data),
-  getAllMetrics: () => ipcRenderer.invoke('get-all-metrics'),
+  // insertDummyData: (data) => ipcRenderer.invoke('insert-dummy-data', data),
+  // getAllMetrics: () => ipcRenderer.invoke('get-all-metrics'),
   queryMetrics: (data) => ipcRenderer.invoke('query-metrics', data),
+  insertMetric: (data) => ipcRenderer.invoke('insert-metric', data),
 
   // File system
   openPdfFile: () => ipcRenderer.invoke('dialog:openPdfFile'),
