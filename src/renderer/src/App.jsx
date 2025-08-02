@@ -66,6 +66,10 @@ Avoid answering queries that relate to critical medical decisions or emergencies
 const PLANNER_SYSTEM_PROMPT = `
 [System Time: {time}]
 
+<conversation_history>
+{history}
+</conversation_history>
+
 You are a helpful health AI assistant.
 Your role is to understand the user's intent and extract relevant entities from their query, outputting a JSON object.
 Based on the query, decide which action should be taken.
@@ -78,9 +82,9 @@ Available Intents and their required entities, along with some examples:
   * Example JSON output: \`{"intent": "GREETING"}\`
 
 2. **DIRECT_LLM_RESPONSE**: User is asking a general health question that can be answered directly
- from the AI's knowledge, without needing external tools.
+ from the AI's knowledge, without needing external tools. This can also be a follow-up question that refers to the conversation history.
   * **entities**:
-    * \`query\`: (string) The full health question.
+    * \`query\`: (string) The full health question from the user's current query.
   * Example user inputs: 
     "What are the benefits of regular exercise"
     "Tell me about hypertension"
