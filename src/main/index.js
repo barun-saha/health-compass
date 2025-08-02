@@ -20,34 +20,49 @@ const db = new sqlite3.Database(dbPath, (err) => {
 // Database functions
 const initDatabase = async () => {
   return new Promise((resolve, reject) => {
-    db.run(
-      `CREATE TABLE IF NOT EXISTS metrics (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      metric_type TEXT NOT NULL,
-      value TEXT NOT NULL,
-      timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-    )`,
-      (err) => {
+    db.serialize(() => {
+      db.run('DROP TABLE IF EXISTS metrics', (err) => {
         if (err) {
-          reject('Error creating metrics table: ' + err.message)
-        } else {
-          resolve('DB Status: Metrics table created successfully.')
+          return reject('Error dropping metrics table: ' + err.message)
         }
-      }
-    )
+      })
+      db.run(
+        `CREATE TABLE metrics (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              metric_type TEXT NOT NULL,
+              value TEXT NOT NULL,
+              unit TEXT,
+              date TEXT,
+              time TEXT,
+              subtype TEXT,
+              notes TEXT,
+              timestamp DATETIME NOT NULL
+            )`,
+        (err) => {
+          if (err) {
+            reject('Error creating metrics table: ' + err.message)
+          } else {
+            resolve('DB Status: Metrics table created/reset successfully.')
+          }
+        }
+      )
+    })
   })
 }
 
 const insertDummyData = async (data) => {
   return new Promise((resolve, reject) => {
-    const { metric_type, value } = data
+    const { metric_type, value, unit, date, time, subtype, notes } = data
+    const timestamp = new Date().toISOString()
+
     db.run(
-      `INSERT INTO metrics (metric_type, value) VALUES (?, ?)`,
-      [metric_type, value],
+      `INSERT INTO metrics (metric_type, value, unit, date, time, subtype, notes, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [metric_type, value, unit, date, time, subtype, notes, timestamp],
       function (err) {
         if (err) {
-          reject('Error inserting dummy data: ' + err.message)
+          reject('Error inserting data: ' + err.message)
         } else {
+          console.log(`Data inserted with ID: ${this.lastID}`, data)
           resolve(`DB Status: Data inserted with ID: ${this.lastID}`)
         }
       }
