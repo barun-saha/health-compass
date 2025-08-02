@@ -252,8 +252,25 @@ const getPlan = async (input) => {
 
 // Component definition
 function App() {
-  const [darkMode, setDarkMode] = useState(false)
+  const [darkMode, setDarkMode] = useState(() => {
+    try {
+      const savedMode = window.localStorage.getItem('darkMode')
+      return savedMode ? JSON.parse(savedMode) : false
+    } catch (error) {
+      console.error('Error reading darkMode from localStorage:', error)
+      return false
+    }
+  })
   const theme = useMemo(() => (darkMode ? darkTheme : lightTheme), [darkMode])
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem('darkMode', JSON.stringify(darkMode))
+    } catch (error) {
+      console.error('Error writing darkMode to localStorage:', error)
+    }
+  }, [darkMode])
+
   const [chat, setChat] = useState([{ role: 'system', content: SYSTEM_PROMPT }])
   const [input, setInput] = useState('')
   const [selectedPdf, setSelectedPdf] = useState(null)
