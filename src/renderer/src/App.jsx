@@ -266,7 +266,9 @@ function App() {
 
     // Build the message content based on whether a PDF is attached
     // This is for display purposes, the actual logic will use the 'selectedPdf' state
-    const messageContent = selectedPdf ? `${input}\n\nPDF file attached: ${selectedPdf.fileName}` : input
+    const messageContent = selectedPdf
+      ? `${input}\n\nPDF file attached: ${selectedPdf.fileName}`
+      : input
 
     try {
       // Add user message
