@@ -23,6 +23,7 @@ import zodToJsonSchema from 'zod-to-json-schema'
 import { config } from './config.browser'
 import { lightTheme, darkTheme } from './theme'
 import { generateOllama, intentHandlers } from './agentActions'
+import healthCompassIcon from '../../../resources/icon.png'
 
 const wavyBackgroundSvg = `
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1422 800" opacity="0.3">
@@ -92,7 +93,7 @@ Available Intents and their required entities:
 4. **LOG_HEALTH_METRIC**: User wants to record a specific health measurement. This requires extracting precise data points.
   * **entities**:
     * \`metric_type\`: (string) The type of health measurement (e.g., 'blood_pressure', 'blood_sugar', 'weight', 'temperature', 'sleep_duration', 'heart_rate').
-    * \`value\`: (string) The raw value provided by the user (e'g., "120/80", "99.2", "75 kg", "8 hours").
+    * \`value\`: (string) The raw value provided by the user (e.g., "120/80", "99.2", "75", "8").
     * \`unit\`: (string, optional) The unit of measurement (e.g., "mmHg", "mg/dL", "kg", "celsius", "fahrenheit", "hours", "bpm"). Infer if not explicitly stated (e.g., 'mmHg' for BP).
     * \`date\`: (string, optional) The date of the measurement (YYYY-MM-DD format). Default to "today" if not specified. Convert relative terms like "yesterday", "tomorrow" to absolute dates.
     * \`time\`: (string, optional) The time of the measurement (HH:MM:SS format). Default to "now" if not specified. Convert relative terms like "morning", "evening" to precise times.
@@ -189,10 +190,6 @@ const getPlan = async (input) => {
 function App() {
   const [darkMode, setDarkMode] = useState(false)
   const theme = useMemo(() => (darkMode ? darkTheme : lightTheme), [darkMode])
-
-  // ADDED: State for DB Status and Metrics
-  const [metrics, setMetrics] = useState([])
-
   const [chat, setChat] = useState([{ role: 'system', content: SYSTEM_PROMPT }])
   const [input, setInput] = useState('')
   const [selectedPdf, setSelectedPdf] = useState(null)
@@ -228,40 +225,6 @@ function App() {
 
     init()
   }, [])
-
-  // Functions for database interaction
-
-  const handleInsertData = async () => {
-    try {
-      const response = await window.electronAPI.insertDummyData({
-        metric_type: 'blood_sugar',
-        value: '120 mg/dL'
-      })
-      setSnackbarMessage(response)
-      setSnackbarSeverity('success')
-    } catch (err) {
-      setSnackbarMessage(`Insert Error: ${err}`)
-      setSnackbarSeverity('error')
-      console.error('Insert Data Error:', err)
-    } finally {
-      setSnackbarOpen(true)
-    }
-  }
-
-  const handleFetchData = async () => {
-    try {
-      const allMetrics = await window.electronAPI.getAllMetrics()
-      setMetrics(allMetrics)
-      setSnackbarMessage('Data fetched successfully!')
-      setSnackbarSeverity('success')
-    } catch (err) {
-      setSnackbarMessage(`Fetch Error: ${err}`)
-      setSnackbarSeverity('error')
-      console.error('Fetch Data Error:', err)
-    } finally {
-      setSnackbarOpen(true)
-    }
-  }
 
   const handleSend = async () => {
     // Input must not be empty
@@ -427,35 +390,20 @@ function App() {
           }}
         >
           <Box
-            sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}
+            sx={{
+              display: 'flex',
+              alignItems: 'center', // Added to vertically align the icon and text
+              justifyContent: 'space-between',
+              mb: 2
+            }}
           >
-            <Typography variant="h5">🧭 Health Compass</Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <img src={healthCompassIcon} alt="Health Compass Icon" style={{ height: '48px' }} />
+              <Typography variant="h5">Health Compass</Typography>
+            </Box>
             <IconButton onClick={toggleTheme} color="inherit">
               {darkMode ? <Brightness7Icon /> : <Brightness4Icon />}
             </IconButton>
-          </Box>
-
-          <Box sx={{ mb: 2 }}>
-            <Stack direction="row" spacing={1} sx={{ my: 1 }}>
-              <Button variant="contained" size="small" onClick={handleInsertData}>
-                Insert Dummy Data
-              </Button>
-              <Button variant="contained" size="small" onClick={handleFetchData}>
-                Fetch Data
-              </Button>
-            </Stack>
-            {metrics.length > 0 && (
-              <Box sx={{ mt: 2 }}>
-                <Typography variant="subtitle1">Fetched Metrics:</Typography>
-                <ul style={{ paddingLeft: '20px' }}>
-                  {metrics.map((metric) => (
-                    <li
-                      key={metric.id}
-                    >{`${metric.metric_type}: ${metric.value} (ID: ${metric.id})`}</li>
-                  ))}
-                </ul>
-              </Box>
-            )}
           </Box>
 
           <Box
