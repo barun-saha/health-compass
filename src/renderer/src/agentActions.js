@@ -110,6 +110,55 @@ const handleLogHealthMetric = (entities) => {
   return response
 }
 
+const handleQuery = async (entities) => {
+  const { metric_type, aggregate, date_start, date_end } = entities || {}
+  console.log('Received query intent:', {
+    metric_type,
+    aggregate,
+    date_start,
+    date_end
+  })
+
+  // table schema for metrics:
+  // CREATE TABLE metrics (
+  //       metric_type TEXT NOT NULL,
+  //       value TEXT NOT NULL,
+  //       unit TEXT,
+  //       date TEXT,
+  //       time TEXT,
+  //       subtype TEXT,
+  //     )
+  
+  if (!metric_type) {
+    return 'Please specify a metric type to query. For example, "heart_rate", "weight", etc.'
+  }
+  try {
+    const queryResult = await window.electronAPI.queryMetrics({
+      metric_type,
+      aggregate,
+      date_start,
+      date_end
+    })
+
+    if (queryResult.length === 0) {
+      return `No records found for the metric type "${metric_type}".`
+    }
+
+    // Format the response based on the query result
+    let response = `Here are the results for "${metric_type}":\n`
+    queryResult.forEach((row) => {
+      response += `- ${row.date} ${row.time}: ${row.value} ${row.unit}\n`
+    })
+
+    return response
+  } catch (error) {
+    console.error('Error querying metrics:', error)
+    return 'An error occurred while querying the metrics. Please try again later.'
+  }
+
+  // return 'Not yet implemented.'
+}
+
 const handleUnsure = () => {
   return "I'm not sure how to respond to that. Please ask a health-related question."
 }
@@ -119,5 +168,6 @@ export const intentHandlers = {
   DIRECT_LLM_RESPONSE: { func: handleDirectResponse, isAsync: true },
   EXPLAIN_PDF_REPORT: { func: handleExplainPdfReport, isAsync: true },
   LOG_HEALTH_METRIC: { func: handleLogHealthMetric, isAsync: false },
+  QUERY_METRICS: { func: handleQuery, isAsync: true },
   UNSURE: { func: handleUnsure, isAsync: false }
 }

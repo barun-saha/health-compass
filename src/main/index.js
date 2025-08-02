@@ -65,6 +65,31 @@ const insertDummyData = async (data) => {
   })
 }
 
+// Use the entities to construct a parameterized SQL query string to query the SQLite database
+const queryMetrics = async ({ metric_type, aggregate, date_start, date_end }) => {
+  return new Promise((resolve, reject) => {
+    let query = `SELECT * FROM metrics WHERE metric_type = ?`
+    const params = [metric_type]
+    if (date_start && date_end) {
+      query += ` AND date BETWEEN ? AND ?`
+      params.push(date_start, date_end)
+    }
+    if (aggregate) {
+      query = `SELECT ${aggregate}(value) AS value, unit, date, time FROM (${query}) GROUP BY date, time, unit`
+    }
+    console.log('Executing query:', query, 'with params:', params)
+
+    db.all(query, params, (err, rows) => {
+      if (err) {
+        reject('Error querying metrics: ' + err.message)
+      } else {
+        console.log('Query result:', rows)
+        resolve(rows)
+      }
+    })
+  })
+}
+
 const getAllMetrics = async () => {
   return new Promise((resolve, reject) => {
     db.all(`SELECT * FROM metrics`, [], (err, rows) => {
@@ -156,6 +181,9 @@ app.whenReady().then(async () => {
 
   // IPC handler for opening a file dialog
   ipcMain.handle('dialog:openPdfFile', handleOpenPdfFile)
+
+  // IPC for database query
+  ipcMain.handle('query-metrics', queryMetrics)
 
   createWindow()
 

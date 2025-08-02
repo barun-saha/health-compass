@@ -10,10 +10,11 @@ const api = {
   // Database
   insertDummyData: (data) => ipcRenderer.invoke('insert-dummy-data', data),
   getAllMetrics: () => ipcRenderer.invoke('get-all-metrics'),
+  queryMetrics: () => ipcRenderer.invoke('query-metrics'),
 
   // File system
   openPdfFile: () => ipcRenderer.invoke('dialog:openPdfFile'),
-  readPdfFile: (filePath) => ipcRenderer.invoke('read-pdf-file', filePath) // <-- Update this handler
+  readPdfFile: (filePath) => ipcRenderer.invoke('read-pdf-file', filePath)
 }
 
 // Use `contextBridge` to expose provided APIs to the renderer
