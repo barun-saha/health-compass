@@ -1,10 +1,10 @@
 # Health Compass
 
-<img src="resources/icon.png" width="256" height="256" alt="Health Compass—navigate your health to the right direction" title="Health Compass—navigate your health to the right direction">
+<img src="resources/icon.png" width="256" height="256" alt="Health Compass—navigate your health in the right direction" title="Health Compass—navigate your health in the right direction">
 
-Health Compass is a local-first, AI-powered desktop application designed to help you manage and understand your health data. Chat with a privacy-focused AI to log metrics, query your health history, and get easy-to-understand explanations of your lab reports.
+Health Compass is a local-first, AI-powered desktop application designed to help you manage and understand your health data. Chat with a privacy-focused AI to log metrics, query your health history, and get easy-to-understand explanations of your lab reports. You can do all these with just a computer that has a CPU, even if you don't have a GPU.
 
-With Health Compass, navigate your health to the right direction!
+With Health Compass, navigate your health in the right direction!
 
 ## ✨ Features
 
@@ -34,18 +34,18 @@ Health Compass is built with modern web technologies in a desktop container:
 
 ## 📋 Prerequisites
 
-Health Compass relies on two external pieces of software to function correctly: Ollama for AI capabilities and Poppler for PDF analysis. Please ensure they are installed and configured before running the application.
+Health Compass relies on two external software components to function correctly: Ollama for AI capabilities and Poppler for PDF analysis. Please ensure they are installed and configured before running the application.
 
 ### 1. Ollama
 
 Ollama is required to run the local large language models that power the AI chat.
 
-1.  Download and install Ollama from the official website: [https://ollama.com/](https://ollama.com/)
-2.  Once installed, pull a model for the application to use. We recommend `llama3`:
-    ```bash
-    ollama pull llama3
-    ```
-3.  Ensure the Ollama server is running before you start Health Compass. The application will attempt to start it, but it's best to run it manually the first time.
+1. Download and install Ollama from the official website: [https://ollama.com/](https://ollama.com/)
+2. Once installed, pull a model for the application to use, for example, `gemma3n:e2b`:
+ ```bash
+    ollama pull gemma3n:e2b
+ ```
+3. Ensure the Ollama server is running before you start Health Compass. The application will attempt to start it, but it's best to run it manually the first time.
 
 ### 2. PDF Text Extraction (`pdftotext`)
 
@@ -72,9 +72,9 @@ sudo apt-get install poppler-utils
 
 **Windows**
 
-1.  Go to the [Poppler for Windows releases page](https://github.com/oschwartz10612/poppler-windows/releases) and download the latest binary (`.zip` file).
-2.  Unzip the downloaded file (e.g., to `C:\poppler-24.02.0-0`).
-3.  Add the `bin/` directory from the unzipped folder to your system's `PATH` environment variable. This allows the `pdftotext` command to be found from your terminal.
+1. Go to the [Poppler for Windows releases page](https://github.com/oschwartz10612/poppler-windows/releases) and download the latest binary (`.zip` file).
+2. Unzip the downloaded file (e.g., to `C:\poppler-24.02.0-0`).
+3. Add the `bin/` directory from the unzipped folder to your system's `PATH` environment variable. This allows the `pdftotext` command to be found from your terminal.
 
 Alternatively, visit the [XpdfReader website](https://www.xpdfreader.com/download.html) and download the zip archive under the "Download the Xpdf command line tools" section. Extract the archive and add the location of the `bin/` directory to `PATH`.
 
@@ -97,7 +97,7 @@ npm run dev
 ### Build
 
 ```bash
-# For windows
+# For Windows
 npm run build:win
 
 # For macOS
@@ -106,6 +106,17 @@ npm run build:mac
 # For Linux
 npm run build:linux
 ```
+
+### Set Default LLM (or SLM)
+
+Create a `.env` file in the project root directory and set the LLM (via Ollama) you want to use, for example:
+```
+VITE_LLM_MODEL=gemma3n:e2b
+```
+
+When you run `npm run dev`, you can verify from the logs in the terminal that the specified LLM is used.
+
+For even faster CPU inference, you can use `gemma3:1b`. However, `gemma3n:2b` and `gemma3n:4b` seem to have better instruction-following capabilities.
 
 
 # 🙏 Acknwoledgement
