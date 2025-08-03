@@ -1,6 +1,10 @@
-# 🧭 Health Compass
+# Health Compass
+
+<img src="resources/icon.png" width="256" height="256" alt="Health Compass—navigate your health to the right direction" title="Health Compass—navigate your health to the right direction">
 
 Health Compass is a local-first, AI-powered desktop application designed to help you manage and understand your health data. Chat with a privacy-focused AI to log metrics, query your health history, and get easy-to-understand explanations of your lab reports.
+
+With Health Compass, navigate your health to the right direction!
 
 ## ✨ Features
 
@@ -15,6 +19,7 @@ Health Compass is a local-first, AI-powered desktop application designed to help
 ## ⚙️ How It Works
 
 Health Compass is built with modern web technologies in a desktop container:
+
 - **`Electron`**: Provides the cross-platform desktop application shell.
 - **`React + Vite`**: Powers the user interface for a fast and responsive experience.
 - **`Ollama`**: Runs local LLMs to understand user queries and generate responses.
@@ -28,7 +33,7 @@ Health Compass is built with modern web technologies in a desktop container:
 
 Health Compass relies on two external pieces of software to function correctly: Ollama for AI capabilities and Poppler for PDF analysis. Please ensure they are installed and configured before running the application.
 
-### 🧠 1. Ollama
+### 1. Ollama
 
 Ollama is required to run the local large language models that power the AI chat.
 
@@ -39,7 +44,7 @@ Ollama is required to run the local large language models that power the AI chat
     ```
 3.  Ensure the Ollama server is running before you start Health Compass. The application will attempt to start it, but it's best to run it manually the first time.
 
-### 📄 2. PDF Text Extraction (`pdftotext`)
+### 2. PDF Text Extraction (`pdftotext`)
 
 For analyzing PDF lab reports, Health Compass requires the `pdftotext` command-line tool, which is part of the [Poppler](https://poppler.freedesktop.org/) library.
 
@@ -68,23 +73,25 @@ sudo apt-get install poppler-utils
 2.  Unzip the downloaded file (e.g., to `C:\poppler-24.02.0-0`).
 3.  Add the `bin/` directory from the unzipped folder to your system's `PATH` environment variable. This allows the `pdftotext` command to be found from your terminal.
 
+Alternatively, visit the [XpdfReader website](https://www.xpdfreader.com/download.html) and download the zip archive under the "Download the Xpdf command line tools" section. Extract the archive and add the location of the `bin/` directory to `PATH`.
+
 To verify that `pdftotext` is properly installed, open a terminal and enter `pdftotext -v`. You should see the version information.
 
 ## 🚀 Project Setup
 
-### 📥 Install
+### Install
 
 ```bash
 npm install
 ```
 
-### 👨‍💻 Development
+### Development
 
 ```bash
 npm run dev
 ```
 
-### 🧱 Build
+### Build
 
 ```bash
 # For windows
@@ -96,3 +103,8 @@ npm run build:mac
 # For Linux
 npm run build:linux
 ```
+
+
+# 🙏 Acknwoledgement
+
+Health Compass has been developed using [Gemini](https://gemini.google.com/), [Aider](https://aider.chat/), and [GitHub Copilot](https://github.com/features/copilot).
