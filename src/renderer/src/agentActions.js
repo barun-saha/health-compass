@@ -48,19 +48,19 @@ Report Text:
 `
 
 // Define functions to handle each of the intents
-const handleGreeting = (entities, history) => {
+const handleGreeting = () => {
   return 'Hello! How can I assist you today?'
 }
 
-const handleDirectResponse = async (entities, history) => {
+const handleDirectResponse = async (entities) => {
   // For this handler, the history IS the prompt, as it contains the full conversation
   // including the latest user query. The planner uses `entities.query` just to identify
   // the intent, but we use the full history for a contextual response.
-  const llmResponse = await generateOllama(history, config.llm.model, false, 0, null)
-  return llmResponse
+  // const llmResponse = await generateOllama(history, config.llm.model, false, 0, null)
+  return entities.answer || 'Sorry, handleDirectResponse failed to get an answer!'
 }
 
-const handleExplainPdfReport = async (entities, history) => {
+const handleExplainPdfReport = async (entities) => {
   const { pdf_file_path: filePath, query } = entities
   console.log('Received intent to explain PDF report:', { filePath, query })
 
@@ -146,7 +146,7 @@ const resolveRelativeTime = (timeString) => {
  * @param {Object} entities An object containing the metric data.
  * @returns {Promise<string>} A promise that resolves to a confirmation or error message.
  */
-const handleLogHealthMetric = async (entities, history) => {
+const handleLogHealthMetric = async (entities) => {
   const { metric_type, value, unit, date, time, subtype, notes } = entities
 
   try {
@@ -219,7 +219,7 @@ const handleLogHealthMetric = async (entities, history) => {
   }
 }
 
-const handleQuery = async (entities, history) => {
+const handleQuery = async (entities) => {
   const { metric_type, aggregate, date_start, date_end } = entities || {}
   console.log('Received query intent:', {
     metric_type,
@@ -279,7 +279,7 @@ const handleQuery = async (entities, history) => {
   // return 'Not yet implemented.'
 }
 
-const handleUnsure = (entities, history) => {
+const handleUnsure = (entities) => {
   return "I'm not sure how to respond to that. Please ask a health-related question."
 }
 

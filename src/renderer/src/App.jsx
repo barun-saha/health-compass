@@ -66,10 +66,6 @@ Avoid answering queries that relate to critical medical decisions or emergencies
 const PLANNER_SYSTEM_PROMPT = `
 [System Time: {time}]
 
-<conversation_history>
-{history}
-</conversation_history>
-
 You are a helpful health AI assistant.
 Your role is to understand the user's intent and extract relevant entities from their query, outputting a JSON object.
 Based on the query, decide which action should be taken.
@@ -82,15 +78,19 @@ Available Intents and their required entities, along with some examples:
   * Example JSON output: \`{"intent": "GREETING"}\`
 
 2. **DIRECT_LLM_RESPONSE**: User is asking a general health question that can be answered directly
- from the AI's knowledge, without needing external tools. This can also be a follow-up question that refers to the conversation history.
+ from the AI's knowledge, without needing external tools. This can also be a follow-up question
+ that refers to the conversation history.
+ For this particular intent, you will compose and respond with an answer.
   * **entities**:
-    * \`query\`: (string) The full health question from the user's current query.
+    * \`answer\`: (string) The answer to the user's current query.
   * Example user inputs: 
-    "What are the benefits of regular exercise"
-    "Tell me about hypertension"
-    "How does diabetes affect the body"
+    "Benefits of regular exercise?"
+    "hypertension what & cure"
+    "summarize this conversation history"
+    "How does diabetes affect body"
+    "what was my last question?"
   * Example JSON output:
-    \`{"intent": "DIRECT_LLM_RESPONSE", "entities": {"query": "What are the benefits of regular exercise?"}}\`
+    \`{"intent": "DIRECT_LLM_RESPONSE", "entities": {"answer": "<insert asnwer to the query here...>"}}\`
 
 3. **EXPLAIN_PDF_REPORT**: User wants you to read a PDF file and extract and explain the key information.
   * **entities**:
@@ -174,8 +174,13 @@ You can only do one of these actions at a time.
 Always provide a single JSON object with the "intent" key at the top level.
 When providing dates and times, use the system date and time (YYYY-MM-DD and HH:MM:SS) for today and now.
 
+
 ## User's Query
 {query}
+
+
+## Conversation History (use as context for the query)
+{history}
 `.trim()
 
 // Create a Zod schema to capture the plan structure
@@ -191,6 +196,7 @@ const PlanSchema = z.object({
   entities: z
     .object({
       query: z.string().optional(),
+      answer: z.string().optional(),
       pdf_file_path: z.string().optional(),
       metric_type: z.string().optional(),
       value: z.string().optional(),
