@@ -16,7 +16,10 @@ With Health Compass, navigate your health to the right direction!
 - **Powered by Ollama**: Leverages local large language models (LLMs) through [Ollama](https://ollama.com/) for all AI capabilities, ensuring your conversations remain private.
 - **Cross-Platform**: Works on Windows, macOS, and Linux.
 
-## ⚙️ How It Works
+<img src="resources/screenshots/image.png" width="50%" height="50%" alt="Health Compass in action" title="Health Compass in action">
+
+
+# ⚙️ How It Works
 
 Health Compass is built with modern web technologies in a desktop container:
 
