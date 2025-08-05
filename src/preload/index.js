@@ -5,7 +5,8 @@ import { electronAPI } from '@electron-toolkit/preload'
 const api = {
   // Ollama
   initializeOllama: () => ipcRenderer.invoke('initialize-ollama'),
-  generateOllama: (data) => ipcRenderer.invoke('generate-ollama', data),
+  generateOllama: (prompt, model, stream, temperature, format) =>
+    ipcRenderer.invoke('generate-ollama', prompt, model, stream, temperature, format),
 
   // Database
   // insertDummyData: (data) => ipcRenderer.invoke('insert-dummy-data', data),
