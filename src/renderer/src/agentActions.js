@@ -1,5 +1,3 @@
-import ollama from 'ollama'
-
 import { config } from './config.browser'
 
 export const generateOllama = async (
@@ -9,16 +7,16 @@ export const generateOllama = async (
   temperature = 0,
   format = null
 ) => {
-  const response = await ollama.generate({
-    model: model,
-    prompt: prompt,
-    stream: stream,
-    temperature: temperature,
-    format: format
-  })
+  const response = await window.electronAPI.generateOllama(
+    prompt,
+    model,
+    stream,
+    temperature,
+    format
+  )
 
   // The generate() call returns an object, so we return the string part
-  return response.response
+  return response
 }
 
 // System prompt for explaining a PDF report
