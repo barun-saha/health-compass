@@ -39,3 +39,8 @@ Thumbs.db
 *.bak
 *~
 .aider*
+
+
+src/output_texts/
+src/pdfExtract.js
+test/
