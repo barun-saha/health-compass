@@ -1,6 +1,6 @@
 export const config = {
   llm: {
-    model: import.meta.env.VITE_LLM_MODEL || 'gemma3:1b',
+    model: 'gemma3n:e2b',
     timeout: parseInt(import.meta.env.VITE_REQUEST_TIMEOUT) || 30000
   },
   input: {
