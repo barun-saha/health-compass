@@ -139,7 +139,7 @@ export const ensureModel = async (modelName) => {
 /**
  * The main initialization function for Ollama. It first checks the server status, starts it if
  * necessary, and then ensures the required model is available.
- * @returns {Promise<boolean>} A promise that resolves to true if initialization is successful.
+ * @returns {Promise<string>} A promise that resolves to the model name if initialization is successful.
  */
 export const initializeOllama = async () => {
   try {
@@ -159,7 +159,7 @@ export const initializeOllama = async () => {
     await ensureModel(modelName)
 
     console.log('Ollama initialization complete!')
-    return true
+    return modelName
   } catch (error) {
     console.error('Ollama initialization failed:', error)
     throw error

@@ -331,8 +331,8 @@ function App() {
   useEffect(() => {
     const init = async () => {
       try {
-        await window.electronAPI.initializeOllama()
-        setSnackbarMessage('Ollama initialized successfully')
+        const modelName = await window.electronAPI.initializeOllama()
+        setSnackbarMessage(`Ollama initialized successfully! Using model: ${modelName}`)
         setSnackbarSeverity('success')
       } catch (error) {
         setSnackbarMessage('Failed to initialize Ollama. Please check installation.')
