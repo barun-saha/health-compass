@@ -331,8 +331,8 @@ function App() {
   useEffect(() => {
     const init = async () => {
       try {
-        await window.electronAPI.initializeOllama()
-        setSnackbarMessage('Ollama initialized successfully')
+        const modelName = await window.electronAPI.initializeOllama()
+        setSnackbarMessage(`Ollama initialized successfully! Using model: ${modelName}`)
         setSnackbarSeverity('success')
       } catch (error) {
         setSnackbarMessage('Failed to initialize Ollama. Please check installation.')
@@ -375,7 +375,7 @@ function App() {
     try {
       // The user message is created here to be included in the history for the planner
       const userMessage = { role: 'user', content: messageContent }
-      const chatHistoryString = formatChatHistory([...chat, userMessage])
+      const chatHistoryString = formatChatHistory(chat)
 
       // Add user message to the chat
       setChat((prev) => [...prev, userMessage])

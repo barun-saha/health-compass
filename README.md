@@ -101,17 +101,27 @@ npm run build:mac
 npm run build:linux
 ```
 
-### Set Default LLM (or SLM)
+### Set Default LLM (Dev env only)
 
-Create a `.env` file in the project root directory and set the LLM (via Ollama) you want to use, for example:
+In your development environment, create a `.env` file in the project root directory and set the LLM (via Ollama) you want to use, for example:
 
 ```
 VITE_LLM_MODEL=gemma3n:e2b
 ```
 
-When you run `npm run dev`, you can verify from the logs in the terminal that the specified LLM is used.
+When you run `npm run dev`, you can verify from the logs in the terminal that the specified LLM is used. You can also verify the model that Ollama is currently using by running the `ollama ps` command, which would show the model(s) loaded.
+```
+NAME           ID              SIZE      PROCESSOR    CONTEXT    UNTIL
+gemma3n:e2b    719372f8c7de    5.8 GB    100% CPU     4096       4 minutes from now
+```
 
-For even faster CPU inference, you can use `gemma3:1b`. However, `gemma3n:2b` and `gemma3n:4b` seem to have better instruction-following capabilities.
+For even faster CPU inference, you can use `gemma3:1b`. However, `gemma3n:2b` and `gemma3n:4b` seem to have better instruction-following capabilities. Therefore, Gemma 3n is recommended.
+
+### Pre-built Binaries
+
+Pre-built (unsigend) installation files are available on GitHub. You can usem them to install Health Compass on Windows. You must install Ollama separately.
+
+**NOTE: When you install Health Compass via the installation (.exe) file, the installed app will use `gemma3n:2b` by default**.
 
 ## ⚙️ How It Works
 
