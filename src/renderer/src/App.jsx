@@ -15,6 +15,8 @@ import {
 } from '@mui/material'
 import Brightness4Icon from '@mui/icons-material/Brightness4'
 import Brightness7Icon from '@mui/icons-material/Brightness7'
+import AttachFileIcon from '@mui/icons-material/AttachFile'
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { z } from 'zod'
@@ -624,15 +626,17 @@ function App() {
                     padding: '4px',
                     color: 'grey.600'
                   }}
+                  title="Attach PDF file"
                 >
-                  <span style={{ fontSize: '1.6em' }} title="Attach PDF file">
-                    📎
-                  </span>
+                  <AttachFileIcon />
                 </Button>
                 {selectedPdf && (
-                  <Typography variant="caption" color="grey.600">
-                    📎 {selectedPdf.fileName}
-                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    <PictureAsPdfIcon fontSize="small" sx={{ color: 'grey.600' }} />
+                    <Typography variant="caption" color="grey.600">
+                      {selectedPdf.fileName}
+                    </Typography>
+                  </Box>
                 )}
               </Box>
 
