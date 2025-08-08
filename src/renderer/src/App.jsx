@@ -1,32 +1,14 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
-import {
-  ThemeProvider,
-  CssBaseline,
-  IconButton,
-  Box,
-  Paper,
-  TextField,
-  Button,
-  Typography,
-  Snackbar,
-  Alert,
-  CircularProgress,
-  Stack,
-  Tooltip
-} from '@mui/material'
-import Brightness4Icon from '@mui/icons-material/Brightness4'
-import Brightness7Icon from '@mui/icons-material/Brightness7'
-import AttachFileIcon from '@mui/icons-material/AttachFile'
-import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf'
-import ReactMarkdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
+import { ThemeProvider, CssBaseline, Box, Snackbar, Alert } from '@mui/material'
 import { z } from 'zod'
 import zodToJsonSchema from 'zod-to-json-schema'
 
 import { config } from './config.browser'
 import { lightTheme, darkTheme } from './theme'
 import { generateOllama, intentHandlers } from './agentActions'
-import healthCompassIcon from '../../../resources/icon.png'
+import Header from './components/Header'
+import ChatMessages from './components/ChatMessages'
+import ChatInput from './components/ChatInput'
 
 const wavyBackgroundSvg = `
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1422 800" opacity="0.3">
@@ -522,160 +504,25 @@ function App() {
             padding: '2rem'
           }}
         >
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center', // Added to vertically align the icon and text
-              justifyContent: 'space-between',
-              mb: 2
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <img src={healthCompassIcon} alt="Health Compass Icon" style={{ height: '48px' }} />
-              <Typography variant="h5">Health Compass</Typography>
-            </Box>
-            <IconButton onClick={toggleTheme} color="inherit">
-              {darkMode ? <Brightness7Icon /> : <Brightness4Icon />}
-            </IconButton>
-          </Box>
+          <Header darkMode={darkMode} toggleTheme={toggleTheme} />
 
-          <Box
-            sx={{
-              mb: 1,
-              height: 'calc(100vh - 250px)',
-              overflowY: 'auto',
-              paddingBottom: '32px'
-            }}
-          >
-            {chat.slice(1).map((msg, idx) => (
-              <Box
-                key={idx}
-                display="flex"
-                justifyContent={msg.role === 'user' ? 'flex-end' : 'flex-start'}
-                mb={1}
-              >
-                <Paper
-                  elevation={3}
-                  sx={{
-                    padding: '2px 8px',
-                    maxWidth: '80%',
-                    marginBottom: '8px',
-                    backgroundColor: msg.role === 'user' ? 'chat.user' : 'chat.assistant'
-                  }}
-                >
-                  <ReactMarkdown
-                    remarkPlugins={[remarkGfm]}
-                    skipHtml={false}
-                    components={{
-                      table: ({ ...props }) => <table className="gfm-table" {...props} />
-                    }}
-                  >
-                    {msg.content}
-                  </ReactMarkdown>
-                </Paper>
-              </Box>
-            ))}
+          <ChatMessages
+            chat={chat}
+            isLoading={isLoading}
+            planningStatus={planningStatus}
+            chatEndRef={chatEndRef}
+          />
 
-            {isLoading && (
-              <Box display="flex" justifyContent="flex-start" mb={1}>
-                <Stack
-                  direction="row"
-                  spacing={1}
-                  alignItems="center"
-                  sx={{
-                    padding: '2px 8px',
-                    maxWidth: '80%',
-                    color: 'text.secondary'
-                  }}
-                >
-                  <CircularProgress size={20} />
-                  <Typography variant="body2">
-                    {planningStatus === 'planning'
-                      ? 'Planning to respond based on query...'
-                      : 'Generating response...'}
-                  </Typography>
-                </Stack>
-              </Box>
-            )}
-
-            <div ref={chatEndRef} />
-          </Box>
-
-          <Paper
-            elevation={2}
-            sx={{
-              position: 'fixed',
-              bottom: 0,
-              left: '50%',
-              transform: 'translateX(-50%)',
-              width: '90vw',
-              maxWidth: '90vw',
-              backgroundColor: 'background.paper',
-              padding: '1rem',
-              borderRadius: '8px 8px 0 0',
-              boxShadow: 1
-            }}
-          >
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Tooltip title="Attach PDF file">
-                  <IconButton
-                    component="label"
-                    size="small"
-                    onClick={handleOpenPdfFile}
-                    sx={{ color: 'grey.600' }}
-                    aria-label="Attach PDF file"
-                  >
-                    <AttachFileIcon />
-                  </IconButton>
-                </Tooltip>
-                {selectedPdf && (
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                    <PictureAsPdfIcon fontSize="small" sx={{ color: 'grey.600' }} />
-                    <Typography variant="caption" color="grey.600">
-                      {selectedPdf.fileName}
-                    </Typography>
-                  </Box>
-                )}
-              </Box>
-
-              <Box display="flex" gap={1}>
-                <TextField
-                  fullWidth
-                  placeholder="Type your message here..."
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={handleKeyPress}
-                  variant="outlined"
-                  size="small"
-                  multiline
-                  maxRows={4}
-                  sx={{
-                    '& .MuiOutlinedInput-input::placeholder': {
-                      color: 'text.secondary'
-                    }
-                  }}
-                />
-                <Button
-                  variant="contained"
-                  onClick={handleSend}
-                  disabled={isLoading || chat.length - 1 >= 20}
-                  sx={{ minWidth: '80px' }}
-                >
-                  {isLoading ? '...' : 'Send'}
-                </Button>
-              </Box>
-
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ textAlign: 'center', mt: 1 }}
-              >
-                Disclaimer: AI-generated content may contain inaccuracies or outdated information.
-                Always verify with trusted sources/healthcare professionals.
-              </Typography>
-            </Box>
-          </Paper>
+          <ChatInput
+            input={input}
+            setInput={setInput}
+            handleKeyPress={handleKeyPress}
+            handleSend={handleSend}
+            isLoading={isLoading}
+            chat={chat}
+            selectedPdf={selectedPdf}
+            handleOpenPdfFile={handleOpenPdfFile}
+          />
 
           <Snackbar
             open={snackbarOpen}
