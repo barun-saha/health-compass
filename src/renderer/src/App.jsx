@@ -11,7 +11,8 @@ import {
   Snackbar,
   Alert,
   CircularProgress,
-  Stack
+  Stack,
+  Tooltip
 } from '@mui/material'
 import Brightness4Icon from '@mui/icons-material/Brightness4'
 import Brightness7Icon from '@mui/icons-material/Brightness7'
@@ -617,19 +618,17 @@ function App() {
           >
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Button
-                  component="label"
-                  size="small"
-                  onClick={handleOpenPdfFile} // Call the new handler
-                  sx={{
-                    minWidth: 'auto',
-                    padding: '4px',
-                    color: 'grey.600'
-                  }}
-                  title="Attach PDF file"
-                >
-                  <AttachFileIcon />
-                </Button>
+                <Tooltip title="Attach PDF file">
+                  <IconButton
+                    component="label"
+                    size="small"
+                    onClick={handleOpenPdfFile}
+                    sx={{ color: 'grey.600' }}
+                    aria-label="Attach PDF file"
+                  >
+                    <AttachFileIcon />
+                  </IconButton>
+                </Tooltip>
                 {selectedPdf && (
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                     <PictureAsPdfIcon fontSize="small" sx={{ color: 'grey.600' }} />
