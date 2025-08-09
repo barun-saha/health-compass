@@ -1,32 +1,16 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
-import {
-  ThemeProvider,
-  CssBaseline,
-  IconButton,
-  Box,
-  Paper,
-  TextField,
-  Button,
-  Typography,
-  Snackbar,
-  Alert,
-  CircularProgress,
-  Stack,
-  Tooltip
-} from '@mui/material'
-import Brightness4Icon from '@mui/icons-material/Brightness4'
-import Brightness7Icon from '@mui/icons-material/Brightness7'
-import AttachFileIcon from '@mui/icons-material/AttachFile'
-import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf'
-import ReactMarkdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
+import { ThemeProvider, CssBaseline, Box } from '@mui/material'
 import { z } from 'zod'
 import zodToJsonSchema from 'zod-to-json-schema'
 
 import { config } from './config.browser'
 import { lightTheme, darkTheme } from './theme'
 import { generateOllama, intentHandlers } from './agentActions'
-import healthCompassIcon from '../../../resources/icon.png'
+import { useNotification } from './hooks/useNotification'
+import Header from './components/Header'
+import ConversationDisplay from './components/ConversationDisplay'
+import ChatInput from './components/ChatInput'
+import AppNotification from './components/AppNotification'
 
 const wavyBackgroundSvg = `
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1422 800" opacity="0.3">
@@ -304,9 +288,7 @@ function App() {
   const [selectedPdf, setSelectedPdf] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
   const [planningStatus, setPlanningStatus] = useState('idle')
-  const [snackbarOpen, setSnackbarOpen] = useState(false)
-  const [snackbarMessage, setSnackbarMessage] = useState('')
-  const [snackbarSeverity, setSnackbarSeverity] = useState('success')
+  const { notification, showNotification, handleSnackbarClose } = useNotification()
 
   const chatEndRef = useRef(null)
 
@@ -321,13 +303,9 @@ function App() {
   useEffect(() => {
     const messageCount = chat.length - 1 // Exclude system prompt
     if (messageCount === 14) {
-      setSnackbarMessage('You can ask 3 more queries.')
-      setSnackbarSeverity('info')
-      setSnackbarOpen(true)
+      showNotification('You can ask 3 more queries.', 'info')
     } else if (messageCount >= 20) {
-      setSnackbarMessage('You have reached the maximum message limit for this session.')
-      setSnackbarSeverity('info')
-      setSnackbarOpen(true)
+      showNotification('You have reached the maximum message limit for this session.', 'info')
     }
   }, [chat])
 
@@ -335,14 +313,11 @@ function App() {
     const init = async () => {
       try {
         const modelName = await window.electronAPI.initializeOllama()
-        setSnackbarMessage(`Ollama initialized successfully! Using model: ${modelName}`)
-        setSnackbarSeverity('success')
+        showNotification(`Ollama initialized successfully! Using model: ${modelName}`, 'success')
       } catch (error) {
-        setSnackbarMessage('Failed to initialize Ollama. Please check installation.')
-        setSnackbarSeverity('error')
+        showNotification('Failed to initialize Ollama. Please check installation.', 'error')
         console.error('Ollama initialization error:', error)
       }
-      setSnackbarOpen(true)
     }
 
     init()
@@ -351,17 +326,13 @@ function App() {
   const handleSend = async () => {
     const messageCount = chat.length - 1
     if (messageCount >= 20) {
-      setSnackbarMessage('You have reached the maximum message limit for this session.')
-      setSnackbarSeverity('info')
-      setSnackbarOpen(true)
+      showNotification('You have reached the maximum message limit for this session.', 'info')
       return
     }
 
     // Input must not be empty
     if (!input.trim()) {
-      setSnackbarMessage('Please enter a message')
-      setSnackbarSeverity('error')
-      setSnackbarOpen(true)
+      showNotification('Please enter a message', 'error')
       return
     }
 
@@ -390,10 +361,6 @@ function App() {
       setIsLoading(true)
       setPlanningStatus('planning')
 
-      // Add initial empty assistant message to be updated later
-      const assistantMessage = { role: 'assistant', content: '' }
-      setChat((prev) => [...prev, assistantMessage])
-
       let plan
 
       // Short-circuit logic: If a PDF is selected, skip the LLM planner call
@@ -420,9 +387,7 @@ function App() {
       console.log('Intent:', intent, 'Entities:', entities)
 
       if (!intent || !intentHandlers[intent]) {
-        setSnackbarMessage('Unable to process your request. Please try again.')
-        setSnackbarSeverity('error')
-        setSnackbarOpen(true)
+        showNotification('Unable to process your request. Please try again.', 'error')
         return
       }
 
@@ -439,29 +404,25 @@ function App() {
         console.log('Handler response:', response)
       } else {
         console.warn('No handler found for intent:', intent)
-        setSnackbarMessage('Unable to process your request. Please try again.')
-        setSnackbarSeverity('error')
-        setSnackbarOpen(true)
+        showNotification('Unable to process your request. Please try again.', 'error')
         return
       }
 
       setChat((prev) => {
         const newChat = [...prev]
-        newChat[newChat.length - 1] = {
+        newChat.push({
           role: 'assistant',
           content: response
-        }
+        })
         return newChat
       })
     } catch (err) {
       console.error('Detailed error:', err)
       if (err.name === 'AbortError') {
-        setSnackbarMessage('Request timed out. Please try again.')
+        showNotification('Request timed out. Please try again.', 'error')
       } else {
-        setSnackbarMessage('Error connecting to Ollama. Is it running?')
+        showNotification('Error connecting to Ollama. Is it running?', 'error')
       }
-      setSnackbarSeverity('error')
-      setSnackbarOpen(true)
     } finally {
       clearTimeout(timeoutId)
       setIsLoading(false)
@@ -492,10 +453,6 @@ function App() {
     }
   }
 
-  const handleSnackbarClose = () => {
-    setSnackbarOpen(false)
-  }
-
   const toggleTheme = () => setDarkMode(!darkMode)
 
   return (
@@ -522,171 +479,27 @@ function App() {
             padding: '2rem'
           }}
         >
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center', // Added to vertically align the icon and text
-              justifyContent: 'space-between',
-              mb: 2
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <img src={healthCompassIcon} alt="Health Compass Icon" style={{ height: '48px' }} />
-              <Typography variant="h5">Health Compass</Typography>
-            </Box>
-            <IconButton onClick={toggleTheme} color="inherit">
-              {darkMode ? <Brightness7Icon /> : <Brightness4Icon />}
-            </IconButton>
-          </Box>
+          <Header darkMode={darkMode} toggleTheme={toggleTheme} />
 
-          <Box
-            sx={{
-              mb: 1,
-              height: 'calc(100vh - 250px)',
-              overflowY: 'auto',
-              paddingBottom: '32px'
-            }}
-          >
-            {chat.slice(1).map((msg, idx) => (
-              <Box
-                key={idx}
-                display="flex"
-                justifyContent={msg.role === 'user' ? 'flex-end' : 'flex-start'}
-                mb={1}
-              >
-                <Paper
-                  elevation={3}
-                  sx={{
-                    padding: '2px 8px',
-                    maxWidth: '80%',
-                    marginBottom: '8px',
-                    backgroundColor: msg.role === 'user' ? 'chat.user' : 'chat.assistant'
-                  }}
-                >
-                  <ReactMarkdown
-                    remarkPlugins={[remarkGfm]}
-                    skipHtml={false}
-                    components={{
-                      table: ({ ...props }) => <table className="gfm-table" {...props} />
-                    }}
-                  >
-                    {msg.content}
-                  </ReactMarkdown>
-                </Paper>
-              </Box>
-            ))}
+          <ConversationDisplay
+            chat={chat}
+            isLoading={isLoading}
+            planningStatus={planningStatus}
+            chatEndRef={chatEndRef}
+          />
 
-            {isLoading && (
-              <Box display="flex" justifyContent="flex-start" mb={1}>
-                <Stack
-                  direction="row"
-                  spacing={1}
-                  alignItems="center"
-                  sx={{
-                    padding: '2px 8px',
-                    maxWidth: '80%',
-                    color: 'text.secondary'
-                  }}
-                >
-                  <CircularProgress size={20} />
-                  <Typography variant="body2">
-                    {planningStatus === 'planning'
-                      ? 'Planning to respond based on query...'
-                      : 'Generating response...'}
-                  </Typography>
-                </Stack>
-              </Box>
-            )}
+          <ChatInput
+            input={input}
+            setInput={setInput}
+            handleKeyPress={handleKeyPress}
+            handleSend={handleSend}
+            isLoading={isLoading}
+            chat={chat}
+            selectedPdf={selectedPdf}
+            handleOpenPdfFile={handleOpenPdfFile}
+          />
 
-            <div ref={chatEndRef} />
-          </Box>
-
-          <Paper
-            elevation={2}
-            sx={{
-              position: 'fixed',
-              bottom: 0,
-              left: '50%',
-              transform: 'translateX(-50%)',
-              width: '90vw',
-              maxWidth: '90vw',
-              backgroundColor: 'background.paper',
-              padding: '1rem',
-              borderRadius: '8px 8px 0 0',
-              boxShadow: 1
-            }}
-          >
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Tooltip title="Attach PDF file">
-                  <IconButton
-                    component="label"
-                    size="small"
-                    onClick={handleOpenPdfFile}
-                    sx={{ color: 'grey.600' }}
-                    aria-label="Attach PDF file"
-                  >
-                    <AttachFileIcon />
-                  </IconButton>
-                </Tooltip>
-                {selectedPdf && (
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                    <PictureAsPdfIcon fontSize="small" sx={{ color: 'grey.600' }} />
-                    <Typography variant="caption" color="grey.600">
-                      {selectedPdf.fileName}
-                    </Typography>
-                  </Box>
-                )}
-              </Box>
-
-              <Box display="flex" gap={1}>
-                <TextField
-                  fullWidth
-                  placeholder="Type your message here..."
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={handleKeyPress}
-                  variant="outlined"
-                  size="small"
-                  multiline
-                  maxRows={4}
-                  sx={{
-                    '& .MuiOutlinedInput-input::placeholder': {
-                      color: 'text.secondary'
-                    }
-                  }}
-                />
-                <Button
-                  variant="contained"
-                  onClick={handleSend}
-                  disabled={isLoading || chat.length - 1 >= 20}
-                  sx={{ minWidth: '80px' }}
-                >
-                  {isLoading ? '...' : 'Send'}
-                </Button>
-              </Box>
-
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ textAlign: 'center', mt: 1 }}
-              >
-                Disclaimer: AI-generated content may contain inaccuracies or outdated information.
-                Always verify with trusted sources/healthcare professionals.
-              </Typography>
-            </Box>
-          </Paper>
-
-          <Snackbar
-            open={snackbarOpen}
-            autoHideDuration={6000}
-            onClose={handleSnackbarClose}
-            anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-          >
-            <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: '100%' }}>
-              {snackbarMessage}
-            </Alert>
-          </Snackbar>
+          <AppNotification notification={notification} handleSnackbarClose={handleSnackbarClose} />
         </Box>
       </Box>
     </ThemeProvider>

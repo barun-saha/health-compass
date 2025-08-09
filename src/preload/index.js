@@ -16,7 +16,9 @@ const api = {
 
   // File system
   openPdfFile: () => ipcRenderer.invoke('dialog:openPdfFile'),
-  readPdfFile: (filePath) => ipcRenderer.invoke('read-pdf-file', filePath)
+  readPdfFile: (filePath) => ipcRenderer.invoke('read-pdf-file', filePath),
+
+  copyToClipboard: (text) => ipcRenderer.invoke('copy-to-clipboard', text)
 }
 
 // Use `contextBridge` to expose provided APIs to the renderer

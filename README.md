@@ -110,6 +110,7 @@ VITE_LLM_MODEL=gemma3n:e2b
 ```
 
 When you run `npm run dev`, you can verify from the logs in the terminal that the specified LLM is used. You can also verify the model that Ollama is currently using by running the `ollama ps` command, which would show the model(s) loaded.
+
 ```
 NAME           ID              SIZE      PROCESSOR    CONTEXT    UNTIL
 gemma3n:e2b    719372f8c7de    5.8 GB    100% CPU     4096       4 minutes from now
