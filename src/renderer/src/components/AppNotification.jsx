@@ -1,20 +1,16 @@
 import { Snackbar, Alert } from '@mui/material'
 
-const AppNotification = ({
-  snackbarOpen,
-  snackbarMessage,
-  snackbarSeverity,
-  handleSnackbarClose
-}) => {
+const AppNotification = ({ notification, handleSnackbarClose }) => {
+  const { open, message, severity } = notification
   return (
     <Snackbar
-      open={snackbarOpen}
+      open={open}
       autoHideDuration={6000}
       onClose={handleSnackbarClose}
       anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
     >
-      <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: '100%' }}>
-        {snackbarMessage}
+      <Alert onClose={handleSnackbarClose} severity={severity} sx={{ width: '100%' }}>
+        {message}
       </Alert>
     </Snackbar>
   )

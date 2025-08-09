@@ -6,6 +6,7 @@ import zodToJsonSchema from 'zod-to-json-schema'
 import { config } from './config.browser'
 import { lightTheme, darkTheme } from './theme'
 import { generateOllama, intentHandlers } from './agentActions'
+import { useNotification } from './hooks/useNotification'
 import Header from './components/Header'
 import ChatMessages from './components/ChatMessages'
 import ChatInput from './components/ChatInput'
@@ -287,9 +288,7 @@ function App() {
   const [selectedPdf, setSelectedPdf] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
   const [planningStatus, setPlanningStatus] = useState('idle')
-  const [snackbarOpen, setSnackbarOpen] = useState(false)
-  const [snackbarMessage, setSnackbarMessage] = useState('')
-  const [snackbarSeverity, setSnackbarSeverity] = useState('success')
+  const { notification, showNotification, handleSnackbarClose } = useNotification()
 
   const chatEndRef = useRef(null)
 
@@ -304,13 +303,9 @@ function App() {
   useEffect(() => {
     const messageCount = chat.length - 1 // Exclude system prompt
     if (messageCount === 14) {
-      setSnackbarMessage('You can ask 3 more queries.')
-      setSnackbarSeverity('info')
-      setSnackbarOpen(true)
+      showNotification('You can ask 3 more queries.', 'info')
     } else if (messageCount >= 20) {
-      setSnackbarMessage('You have reached the maximum message limit for this session.')
-      setSnackbarSeverity('info')
-      setSnackbarOpen(true)
+      showNotification('You have reached the maximum message limit for this session.', 'info')
     }
   }, [chat])
 
@@ -318,14 +313,11 @@ function App() {
     const init = async () => {
       try {
         const modelName = await window.electronAPI.initializeOllama()
-        setSnackbarMessage(`Ollama initialized successfully! Using model: ${modelName}`)
-        setSnackbarSeverity('success')
+        showNotification(`Ollama initialized successfully! Using model: ${modelName}`, 'success')
       } catch (error) {
-        setSnackbarMessage('Failed to initialize Ollama. Please check installation.')
-        setSnackbarSeverity('error')
+        showNotification('Failed to initialize Ollama. Please check installation.', 'error')
         console.error('Ollama initialization error:', error)
       }
-      setSnackbarOpen(true)
     }
 
     init()
@@ -334,17 +326,13 @@ function App() {
   const handleSend = async () => {
     const messageCount = chat.length - 1
     if (messageCount >= 20) {
-      setSnackbarMessage('You have reached the maximum message limit for this session.')
-      setSnackbarSeverity('info')
-      setSnackbarOpen(true)
+      showNotification('You have reached the maximum message limit for this session.', 'info')
       return
     }
 
     // Input must not be empty
     if (!input.trim()) {
-      setSnackbarMessage('Please enter a message')
-      setSnackbarSeverity('error')
-      setSnackbarOpen(true)
+      showNotification('Please enter a message', 'error')
       return
     }
 
@@ -403,9 +391,7 @@ function App() {
       console.log('Intent:', intent, 'Entities:', entities)
 
       if (!intent || !intentHandlers[intent]) {
-        setSnackbarMessage('Unable to process your request. Please try again.')
-        setSnackbarSeverity('error')
-        setSnackbarOpen(true)
+        showNotification('Unable to process your request. Please try again.', 'error')
         return
       }
 
@@ -422,9 +408,7 @@ function App() {
         console.log('Handler response:', response)
       } else {
         console.warn('No handler found for intent:', intent)
-        setSnackbarMessage('Unable to process your request. Please try again.')
-        setSnackbarSeverity('error')
-        setSnackbarOpen(true)
+        showNotification('Unable to process your request. Please try again.', 'error')
         return
       }
 
@@ -439,12 +423,10 @@ function App() {
     } catch (err) {
       console.error('Detailed error:', err)
       if (err.name === 'AbortError') {
-        setSnackbarMessage('Request timed out. Please try again.')
+        showNotification('Request timed out. Please try again.', 'error')
       } else {
-        setSnackbarMessage('Error connecting to Ollama. Is it running?')
+        showNotification('Error connecting to Ollama. Is it running?', 'error')
       }
-      setSnackbarSeverity('error')
-      setSnackbarOpen(true)
     } finally {
       clearTimeout(timeoutId)
       setIsLoading(false)
@@ -473,10 +455,6 @@ function App() {
     } catch (error) {
       console.error('Error opening file dialog:', error)
     }
-  }
-
-  const handleSnackbarClose = () => {
-    setSnackbarOpen(false)
   }
 
   const toggleTheme = () => setDarkMode(!darkMode)
@@ -526,9 +504,7 @@ function App() {
           />
 
           <AppNotification
-            snackbarOpen={snackbarOpen}
-            snackbarMessage={snackbarMessage}
-            snackbarSeverity={snackbarSeverity}
+            notification={notification}
             handleSnackbarClose={handleSnackbarClose}
           />
         </Box>
