@@ -8,7 +8,7 @@ import { lightTheme, darkTheme } from './theme'
 import { generateOllama, intentHandlers } from './agentActions'
 import { useNotification } from './hooks/useNotification'
 import Header from './components/Header'
-import ChatMessages from './components/ChatMessages'
+import ConversationDisplay from './components/ConversationDisplay'
 import ChatInput from './components/ChatInput'
 import AppNotification from './components/AppNotification'
 
@@ -485,7 +485,7 @@ function App() {
         >
           <Header darkMode={darkMode} toggleTheme={toggleTheme} />
 
-          <ChatMessages
+          <ConversationDisplay
             chat={chat}
             isLoading={isLoading}
             planningStatus={planningStatus}
@@ -503,10 +503,7 @@ function App() {
             handleOpenPdfFile={handleOpenPdfFile}
           />
 
-          <AppNotification
-            notification={notification}
-            handleSnackbarClose={handleSnackbarClose}
-          />
+          <AppNotification notification={notification} handleSnackbarClose={handleSnackbarClose} />
         </Box>
       </Box>
     </ThemeProvider>

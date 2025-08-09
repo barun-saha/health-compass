@@ -1,12 +1,4 @@
-import {
-  Paper,
-  Box,
-  Tooltip,
-  IconButton,
-  Typography,
-  TextField,
-  Button
-} from '@mui/material'
+import { Paper, Box, Tooltip, IconButton, Typography, TextField, Button } from '@mui/material'
 import AttachFileIcon from '@mui/icons-material/AttachFile'
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf'
 
@@ -86,13 +78,9 @@ const ChatInput = ({
           </Button>
         </Box>
 
-        <Typography
-          variant="caption"
-          color="text.secondary"
-          sx={{ textAlign: 'center', mt: 1 }}
-        >
-          Disclaimer: AI-generated content may contain inaccuracies or outdated information.
-          Always verify with trusted sources/healthcare professionals.
+        <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'center', mt: 1 }}>
+          Disclaimer: AI-generated content may contain inaccuracies or outdated information. Always
+          verify with trusted sources/healthcare professionals.
         </Typography>
       </Box>
     </Paper>

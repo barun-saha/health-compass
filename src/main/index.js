@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow, ipcMain, dialog } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, dialog, clipboard } from 'electron'
 import { join } from 'node:path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import sqlite3 from 'sqlite3'
@@ -6,6 +6,7 @@ import icon from '../../resources/icon.png?asset'
 
 import { initializeOllama, generateOllama } from './ollamaHelper'
 import { readPdfFile } from './pdfHelper'
+import { text } from 'node:stream/consumers'
 
 // Database setup
 const dbPath = join(app.getPath('userData'), 'health_compass.db')
@@ -194,6 +195,16 @@ async function handleOpenPdfFile() {
   }
 }
 
+const copyToClipboard = async (text) => {
+  try {
+    clipboard.writeText(text)
+    return { success: true }
+  } catch (error) {
+    console.error('Failed to write to clipboard in main process:', error)
+    return { success: false, error: error.message }
+  }
+}
+
 app.whenReady().then(async () => {
   electronApp.setAppUserModelId('com.electron')
 
@@ -219,6 +230,9 @@ app.whenReady().then(async () => {
   ipcMain.handle('generate-ollama', async (_, prompt, model, stream, temperature, schemaOrFormat) =>
     generateOllama(prompt, model, stream, temperature, schemaOrFormat)
   )
+
+  // Clipboard
+  ipcMain.handle('copy-to-clipboard', async (_, text) => copyToClipboard(text))
 
   // IPC handler for PDF reading
   ipcMain.handle('read-pdf-file', (_, filePath) => readPdfFile(filePath))
