@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
-import { ThemeProvider, CssBaseline, Box, Snackbar, Alert } from '@mui/material'
+import { ThemeProvider, CssBaseline, Box } from '@mui/material'
 import { z } from 'zod'
 import zodToJsonSchema from 'zod-to-json-schema'
 
@@ -9,6 +9,7 @@ import { generateOllama, intentHandlers } from './agentActions'
 import Header from './components/Header'
 import ChatMessages from './components/ChatMessages'
 import ChatInput from './components/ChatInput'
+import AppNotification from './components/AppNotification'
 
 const wavyBackgroundSvg = `
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1422 800" opacity="0.3">
@@ -524,16 +525,12 @@ function App() {
             handleOpenPdfFile={handleOpenPdfFile}
           />
 
-          <Snackbar
-            open={snackbarOpen}
-            autoHideDuration={6000}
-            onClose={handleSnackbarClose}
-            anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-          >
-            <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: '100%' }}>
-              {snackbarMessage}
-            </Alert>
-          </Snackbar>
+          <AppNotification
+            snackbarOpen={snackbarOpen}
+            snackbarMessage={snackbarMessage}
+            snackbarSeverity={snackbarSeverity}
+            handleSnackbarClose={handleSnackbarClose}
+          />
         </Box>
       </Box>
     </ThemeProvider>
