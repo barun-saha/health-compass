@@ -361,10 +361,6 @@ function App() {
       setIsLoading(true)
       setPlanningStatus('planning')
 
-      // Add initial empty assistant message to be updated later
-      const assistantMessage = { role: 'assistant', content: '' }
-      setChat((prev) => [...prev, assistantMessage])
-
       let plan
 
       // Short-circuit logic: If a PDF is selected, skip the LLM planner call
@@ -414,10 +410,10 @@ function App() {
 
       setChat((prev) => {
         const newChat = [...prev]
-        newChat[newChat.length - 1] = {
+        newChat.push({
           role: 'assistant',
           content: response
-        }
+        })
         return newChat
       })
     } catch (err) {
