@@ -1,4 +1,4 @@
-import { Box, Paper, Stack, CircularProgress, Typography } from '@mui/material'
+import { Box } from '@mui/material'
 import ChatMessage from './ChatMessage'
 import PlanningStatus from './PlanningStatus'
 
@@ -13,7 +13,7 @@ const ConversationDisplay = ({ chat, isLoading, planningStatus, chatEndRef }) =>
       }}
     >
       {chat.slice(1).map((msg, idx) => (
-        <ChatMessage key={idx} msg={msg} />
+        <ChatMessage key={msg.id ?? idx} msg={msg} />
       ))}
 
       {isLoading && <PlanningStatus planningStatus={planningStatus} />}

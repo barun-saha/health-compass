@@ -18,7 +18,10 @@ const api = {
   openPdfFile: () => ipcRenderer.invoke('dialog:openPdfFile'),
   readPdfFile: (filePath) => ipcRenderer.invoke('read-pdf-file', filePath),
 
-  copyToClipboard: (text) => ipcRenderer.invoke('copy-to-clipboard', text)
+  copyToClipboard: (text) => {
+    const payload = typeof text === 'string' ? text : String(text ?? '')
+    return ipcRenderer.invoke('copy-to-clipboard', payload)
+  }
 }
 
 // Use `contextBridge` to expose provided APIs to the renderer
