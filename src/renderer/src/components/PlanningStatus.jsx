@@ -1,4 +1,4 @@
-import { Box, Stack, CircularProgress, Typography } from '@mui/material';
+import { Box, Stack, CircularProgress, Typography } from '@mui/material'
 
 const PlanningStatus = ({ planningStatus }) => {
   return (
@@ -10,7 +10,7 @@ const PlanningStatus = ({ planningStatus }) => {
         sx={{
           padding: '2px 8px',
           maxWidth: '80%',
-          color: 'text.secondary',
+          color: 'text.secondary'
         }}
       >
         <CircularProgress size={20} />
@@ -21,7 +21,7 @@ const PlanningStatus = ({ planningStatus }) => {
         </Typography>
       </Stack>
     </Box>
-  );
-};
+  )
+}
 
 export default PlanningStatus

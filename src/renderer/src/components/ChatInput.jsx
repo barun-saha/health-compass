@@ -42,9 +42,19 @@ const ChatInput = ({
             </IconButton>
           </Tooltip>
           {selectedPdf && (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, minWidth: 0 }}>
               <PictureAsPdfIcon fontSize="small" sx={{ color: 'grey.600' }} />
-              <Typography variant="caption" color="grey.600">
+              <Typography
+                variant="caption"
+                sx={{
+                  color: 'grey.600',
+                  maxWidth: '50vw',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap'
+                }}
+                title={selectedPdf.fileName}
+              >
                 {selectedPdf.fileName}
               </Typography>
             </Box>

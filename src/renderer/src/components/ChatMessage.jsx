@@ -6,28 +6,28 @@ import remarkGfm from 'remark-gfm'
 
 const ChatMessage = ({ msg }) => {
   const [tooltipText, setTooltipText] = useState('Copy message')
-  
+
   // Function to copy text to clipboard
   const handleCopy = async () => {
     try {
-      const result = await window.electronAPI.copyToClipboard(msg.content);
+      const result = await window.electronAPI.copyToClipboard(msg.content)
       if (result.success) {
-        console.log('Message copied via IPC!');
+        console.log('Message copied via IPC!')
         setTooltipText('Copied!')
         setTimeout(() => {
           setTooltipText('Copy message')
         }, 1500) // Revert after 1.5 seconds
       } else {
-        console.error('Failed to copy via IPC:', result.error);
+        console.error('Failed to copy via IPC:', result.error)
         setTooltipText('Failed to copy!')
         setTimeout(() => {
           setTooltipText('Copy message')
         }, 2000) // Give more time for error message
       }
     } catch (error) {
-      console.error('Error calling copy IPC:', error);
+      console.error('Error calling copy IPC:', error)
     }
-  };
+  }
 
   return (
     <Box display="flex" justifyContent={msg.role === 'user' ? 'flex-end' : 'flex-start'} mb={1}>
@@ -43,7 +43,7 @@ const ChatMessage = ({ msg }) => {
       >
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
-          skipHtml={false}
+          skipHtml
           components={{
             table: ({ ...props }) => <table className="gfm-table" {...props} />
           }}

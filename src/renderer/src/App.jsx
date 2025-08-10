@@ -411,6 +411,10 @@ function App() {
       setChat((prev) => {
         const newChat = [...prev]
         newChat.push({
+          id:
+            typeof crypto !== 'undefined' && crypto.randomUUID
+              ? crypto.randomUUID()
+              : String(Date.now() + Math.random()),
           role: 'assistant',
           content: response
         })
