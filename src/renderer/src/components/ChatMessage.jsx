@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Box, Paper, IconButton, Tooltip, Typography } from '@mui/material'
+import { Box, Paper, IconButton, Tooltip } from '@mui/material'
 import ContentCopyIcon from '@mui/icons-material/ContentCopy'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'

@@ -1,4 +1,4 @@
-import { Box, Paper, Stack, CircularProgress, Typography } from '@mui/material'
+import { Box } from '@mui/material'
 import ChatMessage from './ChatMessage'
 import PlanningStatus from './PlanningStatus'
 
