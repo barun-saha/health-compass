@@ -13,7 +13,7 @@ const ConversationDisplay = ({ chat, isLoading, planningStatus, chatEndRef }) =>
       }}
     >
       {chat.slice(1).map((msg, idx) => (
-        <ChatMessage key={`${msg.role}-${msg.content?.slice(0, 20)}`} msg={msg} />
+        <ChatMessage key={msg.id ?? idx} msg={msg} />
       ))}
 
       {isLoading && <PlanningStatus planningStatus={planningStatus} />}

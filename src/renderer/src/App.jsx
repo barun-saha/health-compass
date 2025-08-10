@@ -224,6 +224,13 @@ function formatTemplate(template, values) {
   })
 }
 
+function createMessageId() {
+  // Use crypto.randomUUID() if available, otherwise fallback to a timestamp-based ID
+  return typeof crypto !== 'undefined' && crypto.randomUUID
+    ? crypto.randomUUID()
+    : String(Date.now() + Math.random())
+}
+
 /**
  * Get a plan based on the user's input using Ollama.
  * @param {string} input - The user's input query.
@@ -283,7 +290,9 @@ function App() {
     }
   }, [darkMode])
 
-  const [chat, setChat] = useState([{ role: 'system', content: SYSTEM_PROMPT }])
+  const [chat, setChat] = useState([
+    { id: createMessageId(), role: 'system', content: SYSTEM_PROMPT }
+  ])
   const [input, setInput] = useState('')
   const [selectedPdf, setSelectedPdf] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
@@ -348,7 +357,7 @@ function App() {
 
     try {
       // The user message is created here to be included in the history for the planner
-      const userMessage = { role: 'user', content: messageContent }
+      const userMessage = { id: createMessageId(), role: 'user', content: messageContent }
       const chatHistoryString = formatChatHistory(chat)
 
       // Add user message to the chat
@@ -411,10 +420,7 @@ function App() {
       setChat((prev) => {
         const newChat = [...prev]
         newChat.push({
-          id:
-            typeof crypto !== 'undefined' && crypto.randomUUID
-              ? crypto.randomUUID()
-              : String(Date.now() + Math.random()),
+          id: createMessageId(),
           role: 'assistant',
           content: response
         })
