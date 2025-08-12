@@ -9,7 +9,7 @@ const ConversationDisplay = ({ chat, isLoading, planningStatus, chatEndRef }) =>
         mb: 1,
         height: 'calc(100vh - 250px)',
         overflowY: 'auto',
-        paddingBottom: '32px'
+        paddingBottom: '20px'
       }}
     >
       {chat.slice(1).map((msg, idx) => (

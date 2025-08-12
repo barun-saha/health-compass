@@ -36,7 +36,7 @@ const ChatMessage = ({ msg }) => {
         sx={{
           padding: '2px 8px',
           maxWidth: '80%',
-          marginBottom: '8px',
+          marginBottom: '20px',
           backgroundColor: msg.role === 'user' ? 'chat.user' : 'chat.assistant',
           position: 'relative' // Needed for absolute positioning of copy icon
         }}
