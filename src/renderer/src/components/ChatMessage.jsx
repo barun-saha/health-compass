@@ -1,11 +1,12 @@
 import { useState } from 'react'
-import { Box, Paper, IconButton, Tooltip } from '@mui/material'
+import { Box, Paper, IconButton, Tooltip, useTheme } from '@mui/material'
 import ContentCopyIcon from '@mui/icons-material/ContentCopy'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 
 const ChatMessage = ({ msg }) => {
   const [tooltipText, setTooltipText] = useState('Copy message')
+  const theme = useTheme()
 
   // Function to copy text to clipboard
   const handleCopy = async () => {
@@ -37,7 +38,10 @@ const ChatMessage = ({ msg }) => {
           padding: '2px 8px',
           maxWidth: '80%',
           marginBottom: '20px',
-          backgroundColor: msg.role === 'user' ? 'chat.user' : 'chat.assistant',
+          backgroundColor:
+            msg.role === 'user'
+              ? theme.palette.chat.user[theme.palette.mode]
+              : theme.palette.chat.assistant[theme.palette.mode],
           position: 'relative' // Needed for absolute positioning of copy icon
         }}
       >
