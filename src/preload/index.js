@@ -21,7 +21,10 @@ const api = {
   copyToClipboard: (text) => {
     const payload = typeof text === 'string' ? text : String(text ?? '')
     return ipcRenderer.invoke('copy-to-clipboard', payload)
-  }
+  },
+
+  // Prompts
+  loadPrompts: () => ipcRenderer.invoke('load-prompts')
 }
 
 // Use `contextBridge` to expose provided APIs to the renderer
