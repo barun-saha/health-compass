@@ -52,15 +52,15 @@ const handleExplainPdfReport = async (entities) => {
       return 'I was unable to extract any text from the provided PDF file. Please ensure the file is not corrupted or password-protected.'
     }
 
-    console.log('Extracted PDF text:', reportText)
+    console.debug('Extracted PDF text preview:', reportText.slice(0, 500).replace(/\s+/g, ' '), '…')
 
     // Construct the new prompt for Ollama with the extracted text
     const explainReportPrompt = getPrompt('explain_report')
-    const prompt = explainReportPrompt
+    const finalPrompt = explainReportPrompt
       .replace('{query}', query || 'Explain this report.')
       .replace('{reportText}', reportText)
 
-    const ollamaResponse = await generateOllama(prompt, config.llm.model, false, 0, null)
+    const ollamaResponse = await generateOllama(finalPrompt, config.llm.model, false, 0, null)
     console.log('Ollama response length:', ollamaResponse.length)
 
     return (
