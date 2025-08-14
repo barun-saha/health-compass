@@ -225,7 +225,7 @@ function App() {
         }
         setChat([{ id: createMessageId(), role: 'system', content: systemPrompt }])
 
-        const modelName = await window.electronAPI.initializeOllama()
+        const modelName = await window.electronAPI.initializeOllama(selectedLlm)
         showNotification(`Ollama initialized successfully! Using model: ${modelName}`, 'success')
       } catch (error) {
         showNotification(
@@ -374,8 +374,17 @@ function App() {
 
   const toggleSettings = () => setIsSettingsOpen(!isSettingsOpen)
 
-  const handleLlmChange = (event) => {
-    setSelectedLlm(event.target.value)
+  const handleLlmChange = async (event) => {
+    const newModel = event.target.value
+    setSelectedLlm(newModel)
+    try {
+      showNotification(`Preparing model: ${newModel}... This may take a moment.`, 'info')
+      await window.electronAPI.ensureModel(newModel)
+      showNotification(`Model ${newModel} is ready to use!`, 'success')
+    } catch (error) {
+      console.error(`Failed to ensure model ${newModel}:`, error)
+      showNotification(`Failed to prepare model ${newModel}. See logs for details.`, 'error')
+    }
   }
 
   return (

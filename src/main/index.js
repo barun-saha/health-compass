@@ -5,7 +5,7 @@ import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import sqlite3 from 'sqlite3'
 import icon from '../../resources/icon.png?asset'
 
-import { initializeOllama, generateOllama } from './ollamaHelper'
+import { initializeOllama, generateOllama, ensureModel } from './ollamaHelper'
 import { readPdfFile } from './pdfHelper'
 import { text } from 'node:stream/consumers'
 
@@ -276,7 +276,8 @@ app.whenReady().then(async () => {
   ipcMain.handle('insert-metric', async (_, metricData) => insertMetric(metricData))
 
   // IPC handler for Ollama
-  ipcMain.handle('initialize-ollama', initializeOllama)
+  ipcMain.handle('initialize-ollama', (_, modelName) => initializeOllama(modelName))
+  ipcMain.handle('ensure-model', (_, modelName) => ensureModel(modelName))
   ipcMain.handle('generate-ollama', async (_, prompt, model, stream, temperature, schemaOrFormat) =>
     generateOllama(prompt, model, stream, temperature, schemaOrFormat)
   )
