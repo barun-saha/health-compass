@@ -1,4 +1,5 @@
 import { config } from './config.browser'
+import { getPrompt } from './promptManager'
 
 export const generateOllama = async (
   prompt,
@@ -18,32 +19,6 @@ export const generateOllama = async (
   // The generate() call returns an object, so we return the string part
   return response
 }
-
-// System prompt for explaining a PDF report
-const EXPLAIN_REPORT_PROMPT = `
-You are a helpful health assistant.
-You can accurately interpret lab test results, e.g., blood test reports and others.
-Your task is to explain medical reports to the user in simple, easy-to-understand language.
-- Start with a general overview of the report's purpose, what tests.
-- Correctly identify the test result values (and referene values, where available) and report them faithfully.
-- Highlight any key findings or values that are outside the normal/reference range.
-- Explain what these results/findings might mean, but **do not provide a diagnosis**.
-- Be clear and factual, avoiding medical jargon. Do NOT make up any information.
-- Always recommend that the user consult a healthcare professional for a proper interpretation.
-
-Note: Sometimes text extracted from the PDF reports may be improperly formatted. misaligned, or contain errors.
-E.g., a number "78" might appear as "7 8". Or report headers, measured values, and reference values might be misaligned.
-Or sometimes a row of results might be split into two lines.
-- In such cases, do your best to interpret the text correctly.
-- If you are unable to interpret the text, inform the user that you cannot explain the report. NEVER misinterpret.
-
-User's original query: {query}
-
----
-Report Text:
-{reportText}
----
-`
 
 // Define functions to handle each of the intents
 const handleGreeting = () => {
@@ -77,15 +52,15 @@ const handleExplainPdfReport = async (entities) => {
       return 'I was unable to extract any text from the provided PDF file. Please ensure the file is not corrupted or password-protected.'
     }
 
-    console.log('Extracted PDF text:', reportText)
+    console.debug('Extracted PDF text preview:', reportText.slice(0, 500).replace(/\s+/g, ' '), '…')
 
     // Construct the new prompt for Ollama with the extracted text
-    const prompt = EXPLAIN_REPORT_PROMPT.replace(
-      '{query}',
-      query || 'Explain this report.'
-    ).replace('{reportText}', reportText)
+    const explainReportPrompt = getPrompt('explain_report')
+    const finalPrompt = explainReportPrompt
+      .replace('{query}', query || 'Explain this report.')
+      .replace('{reportText}', reportText)
 
-    const ollamaResponse = await generateOllama(prompt, config.llm.model, false, 0, null)
+    const ollamaResponse = await generateOllama(finalPrompt, config.llm.model, false, 0, null)
     console.log('Ollama response length:', ollamaResponse.length)
 
     return (

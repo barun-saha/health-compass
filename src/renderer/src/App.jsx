@@ -7,6 +7,7 @@ import { config } from './config.browser'
 import { lightTheme, darkTheme } from './theme'
 import { generateOllama, intentHandlers } from './agentActions'
 import { useNotification } from './hooks/useNotification'
+import { loadPrompts, getPrompt } from './promptManager'
 import Header from './components/Header'
 import ConversationDisplay from './components/ConversationDisplay'
 import ChatInput from './components/ChatInput'
@@ -41,134 +42,6 @@ const wavyBackgroundSvg = `
   `.trim()
 
 const svgBase64 = btoa(wavyBackgroundSvg)
-
-const SYSTEM_PROMPT = `
-You are a helpful AI assistant designed to answer questions and provide information on health-related topics.
-You are polite and empathic, always prioritizing the user's well-being.
-Your responses should be accurate, concise, and based on the latest medical guidelines and research.
-If you are unsure about an answer, please indicate that you need more information or suggest consulting a healthcare professional.
-Avoid answering queries that relate to critical medical decisions or emergencies.
-`.trim()
-
-const PLANNER_SYSTEM_PROMPT = `
-[System Time: {time}]
-
-You are a helpful health AI assistant.
-Your role is to understand the user's intent and extract relevant entities from their query, outputting a JSON object.
-Based on the query, decide which action should be taken.
-
-Available Intents and their required entities, along with some examples:
-
-1. **GREETING**: User is simply greeting you.
-  * No specific entities needed.
-  * Example user input: "Hi there", "Hello", "Good morning"
-  * Example JSON output: \`{"intent": "GREETING"}\`
-
-2. **DIRECT_LLM_RESPONSE**: User is asking a general health question that can be answered directly
- from the AI's knowledge, without needing external tools. This can also be a follow-up question
- that refers to the conversation history.
- For this particular intent, you will compose and respond with an answer.
-  * **entities**:
-    * \`answer\`: (string) The answer to the user's current query.
-  * Example user inputs: 
-    "Benefits of regular exercise?"
-    "hypertension what & cure"
-    "summarize this conversation history"
-    "How does diabetes affect body"
-    "what was my last question?"
-  * Example JSON output:
-    \`{"intent": "DIRECT_LLM_RESPONSE", "entities": {"answer": "<insert asnwer to the query here...>"}}\`
-
-3. **EXPLAIN_PDF_REPORT**: User wants you to read a PDF file and extract and explain the key information.
-  * **entities**:
-    * \`pdf_file_path\`: (string) The full file path of the PDF.
-    * \`query\`: (string, optional) Any specific questions the user has about the PDF.
-  * Example user inputs:
-    "Explain this report for me."
-    "What does this blood test say?"
-  * Example JSON output: 
-    \`{"intent": "EXPLAIN_PDF_REPORT", "entities": {"pdf_file_path": "/path/to/report.pdf", "query": "What does this blood test say?"}}\`
-
-4. **LOG_HEALTH_METRIC**: User wants to record a specific health measurement. This requires extracting precise data points.
-  * **entities**:
-    * \`metric_type\`: (string) The type of health measurement 
-      ('blood_pressure', 'blood_sugar', 'weight', 'temperature', 'sleep_duration', 'heart_rate').
-    * \`value\`: (string) The raw value provided by the user (e.g., "120/80", "99.2", "75", "8").
-    * \`unit\`: (string, optional) The unit of measurement
-      (e.g., "mmHg", "mg/dL", "kg", "celsius", "fahrenheit", "hours", "bpm"). 
-      Infer if not explicitly stated (e.g., 'mmHg' for BP).
-    * \`date\`: (string, optional) The date of the measurement (YYYY-MM-DD format). 
-      Default to today (system time given above) if not specified.
-      Convert relative terms like "yesterday", "tomorrow" to absolute dates.
-    * \`time\`: (string, optional) The time of the measurement (HH:MM:SS format). 
-      Default to now (system time given above) if not specified.
-      Convert relative terms like "morning", "evening" to precise times.
-    * \`subtype\`: (string, optional) More specific context 
-      ('fasting', 'post_meal' for blood sugar; 'systolic', 'diastolic' for BP if parsing individual values).
-    * \`notes\`: (string, optional) Any additional notes from the user.
-  * Example user inputs:
-    "blood pressure today 120/80"
-    "Got only 6 hours of sleep last night :("
-    "weight = 75 kg"
-    "log sugar after breakfast 115"
-  * Example JSON output:
-    \`{"intent": "LOG_HEALTH_METRIC", "entities": {"metric_type": "blood_pressure", "value": "120/80", "unit": "mmHg"}}\`
-  
-5. **QUERY_METRICS**: User wants to retrieve previously logged health metrics from database.
-   The database table schema is as follows:
-      CREATE TABLE metrics (
-        metric_type TEXT NOT NULL,
-        value REAL NOT NULL,
-        unit TEXT,
-        date TEXT,
-        time TEXT,
-        subtype TEXT,
-      )
-
-    Based on the user's query, you need to supply the required entities so that they can be used
-    with an SQL query for the table. The \`value\` field is selected by default,
-    so you don't need to specify it in the entities.
-
-  * **entities**: Use the same entities as in the LOG_HEALTH_METRIC intent. \`metric_type\` is mandatory.
-    Additional entities for this intent:
-    * \`aggregate\`: (string, optional) Only \`min\`, \`max\`, \`avg\`, \`count\` are supported.
-    * \`date_start\`: (string, optional) Start date for filtering (YYYY-MM-DD format).
-    * \`date_end\`: (string, optional) End date for filtering (YYYY-MM-DD format).
-  
-  * Example user inputs and JSON outputs below:
-    "Show me my blood pressure readings"
-    \`{"intent": "QUERY_METRICS", "entities": {"metric_type": "blood_pressure"}}\`
-
-    "How many hours did I sleep yesterday?"
-    \`{"intent": "QUERY_METRICS", "entities": {"metric_type": "sleep_duration"}}\`
-
-    "what's my average heart rate?"
-    \`{"intent": "QUERY_METRICS", "entities": {"metric_type": "heart_rate", "aggregate": "avg"}}\`
-
-    "What was my weight last week?"
-    \`{"intent": "QUERY_METRICS", "entities": {"metric_type": "weight",
-     "date_start": "<insert todays date>", "date_end": "<insert today - 7 days>"}}\`
-
-6. **UNSURE**: The intent cannot be clearly determined or is outside the defined scope of capabilities.
-  * No specific entities needed.
-  * Example user input: "Tell me a joke", "What's the weather like?", "Order pizza"
-  * Example JSON output: \`{"intent": "UNSURE"}\`
-
-Carefully discern between the LOG_HEALTH_METRIC and QUERY_METRICS intents based on whether a user's
-query wants to log a health metric or retrieve existing data.
-You can only do one of these actions at a time.
-
-Always provide a single JSON object with the "intent" key at the top level.
-When providing dates and times, use the system date and time (YYYY-MM-DD and HH:MM:SS) for today and now.
-
-
-## User's Query
-{query}
-
-
-## Conversation History (use as context for the query)
-{history}
-`.trim()
 
 // Create a Zod schema to capture the plan structure
 const PlanSchema = z.object({
@@ -238,8 +111,9 @@ function createMessageId() {
  * @returns {Promise<Object>} The parsed plan object.
  */
 const getPlan = async (input, history) => {
+  const plannerSystemPrompt = getPrompt('planner_system')
   const ollamaResponseString = await generateOllama(
-    formatTemplate(PLANNER_SYSTEM_PROMPT, {
+    formatTemplate(plannerSystemPrompt, {
       time: String(new Date()),
       query: input,
       history: history
@@ -290,9 +164,7 @@ function App() {
     }
   }, [darkMode])
 
-  const [chat, setChat] = useState([
-    { id: createMessageId(), role: 'system', content: SYSTEM_PROMPT }
-  ])
+  const [chat, setChat] = useState([])
   const [input, setInput] = useState('')
   const [selectedPdf, setSelectedPdf] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
@@ -321,11 +193,26 @@ function App() {
   useEffect(() => {
     const init = async () => {
       try {
+        await loadPrompts()
+        let systemPrompt
+        try {
+          systemPrompt = getPrompt('system')
+        } catch (error) {
+          console.warn('System prompt missing; using fallback. Error:', error?.message)
+          systemPrompt = 'You are Health Compass, a helpful assistant.'
+          systemPrompt += ' You can answer questions about health metrics, explain PDF reports,'
+          systemPrompt += ' and log health data.'
+        }
+        setChat([{ id: createMessageId(), role: 'system', content: systemPrompt }])
+
         const modelName = await window.electronAPI.initializeOllama()
         showNotification(`Ollama initialized successfully! Using model: ${modelName}`, 'success')
       } catch (error) {
-        showNotification('Failed to initialize Ollama. Please check installation.', 'error')
-        console.error('Ollama initialization error:', error)
+        showNotification(
+          'Failed to initialize the app. Please check installation and restart.',
+          'error'
+        )
+        console.error('Initialization error:', error)
       }
     }
 

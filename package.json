@@ -5,6 +5,25 @@
   "main": "./out/main/index.js",
   "author": "Barun Saha",
   "homepage": "https://github.com/barun-saha/health-compass",
+  "build": {
+    "appId": "com.barunsaha.health-compass",
+    "productName": "Health Compass",
+    "directories": {
+      "output": "dist"
+    },
+    "extraResources": [
+      {
+        "from": "resources/prompts",
+        "to": "prompts",
+        "filter": ["*.txt"]
+      }
+    ],
+    "files": [
+      "out/**/*",
+      "node_modules/**/*",
+      "package.json"
+    ]
+  },
   "scripts": {
     "format": "prettier --write .",
     "lint": "eslint --cache .",

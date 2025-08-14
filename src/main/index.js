@@ -1,5 +1,6 @@
 import { app, shell, BrowserWindow, ipcMain, dialog, clipboard } from 'electron'
 import { join } from 'node:path'
+import { promises as fs } from 'node:fs'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import sqlite3 from 'sqlite3'
 import icon from '../../resources/icon.png?asset'
@@ -195,6 +196,55 @@ async function handleOpenPdfFile() {
   }
 }
 
+/**
+ * Loads all prompt templates from the resources directory.
+ * @returns {Promise<Object>} A promise that resolves to an object mapping prompt names to their content.
+ */
+async function loadPrompts() {
+  const devCandidates = [
+    join(app.getAppPath(), 'resources', 'prompts'),
+    join(process.cwd(), 'resources', 'prompts'),
+    join(__dirname, '../../resources', 'prompts') // when __dirname points to dist/main
+  ]
+  const prodDir = join(process.resourcesPath, 'prompts')
+  let promptsDir = null
+  const candidates = is.dev ? devCandidates : [prodDir]
+
+  for (const c of candidates) {
+    try {
+      const stat = await fs.stat(c)
+      if (stat.isDirectory()) {
+        promptsDir = c
+        console.debug('Prompts directory found:', promptsDir)
+        break
+      }
+    } catch {
+      // continue
+    }
+  }
+  if (!promptsDir) {
+    console.error('No prompts directory found! Tried searching:', candidates)
+    return {}
+  }
+
+  try {
+    const promptFiles = await fs.readdir(promptsDir)
+    const prompts = {}
+    for (const file of promptFiles) {
+      if (file.endsWith('.txt')) {
+        const content = await fs.readFile(join(promptsDir, file), 'utf-8')
+        const key = file.replace('_prompt.txt', '')
+        prompts[key] = content.trim()
+      }
+    }
+    console.log('Prompts loaded successfully.')
+    return prompts
+  } catch (error) {
+    console.error('Failed to read prompts:', error)
+    return {}
+  }
+}
+
 const copyToClipboard = async (text) => {
   try {
     clipboard.writeText(text)
@@ -239,6 +289,9 @@ app.whenReady().then(async () => {
 
   // IPC handler for opening a file dialog
   ipcMain.handle('dialog:openPdfFile', handleOpenPdfFile)
+
+  // IPC handler for loading prompts
+  ipcMain.handle('load-prompts', loadPrompts)
 
   createWindow()
 
