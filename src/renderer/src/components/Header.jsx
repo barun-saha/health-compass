@@ -1,9 +1,8 @@
 import { Box, Typography, IconButton } from '@mui/material'
-import Brightness4Icon from '@mui/icons-material/Brightness4'
-import Brightness7Icon from '@mui/icons-material/Brightness7'
+import SettingsIcon from '@mui/icons-material/Settings'
 import healthCompassIcon from '../../../../resources/icon.png'
 
-const Header = ({ darkMode, toggleTheme }) => {
+const Header = ({ toggleSettings }) => {
   return (
     <Box
       sx={{
@@ -17,8 +16,8 @@ const Header = ({ darkMode, toggleTheme }) => {
         <img src={healthCompassIcon} alt="Health Compass Icon" style={{ height: '48px' }} />
         <Typography variant="h5">Health Compass</Typography>
       </Box>
-      <IconButton onClick={toggleTheme} color="inherit">
-        {darkMode ? <Brightness7Icon /> : <Brightness4Icon />}
+      <IconButton onClick={toggleSettings} color="inherit">
+        <SettingsIcon />
       </IconButton>
     </Box>
   )
