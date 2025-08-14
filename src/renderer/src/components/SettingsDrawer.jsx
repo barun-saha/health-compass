@@ -12,14 +12,7 @@ import {
   InputLabel
 } from '@mui/material'
 
-const SettingsDrawer = ({
-  open,
-  onClose,
-  darkMode,
-  toggleTheme,
-  selectedLlm,
-  handleLlmChange
-}) => {
+const SettingsDrawer = ({ open, onClose, darkMode, toggleTheme, selectedLlm, handleLlmChange }) => {
   return (
     <Drawer anchor="left" open={open} onClose={onClose}>
       <Box sx={{ width: 250, p: 2 }} role="presentation">
