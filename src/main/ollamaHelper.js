@@ -141,7 +141,7 @@ export const ensureModel = async (modelName) => {
  * necessary, and then ensures the required model is available.
  * @returns {Promise<string>} A promise that resolves to the model name if initialization is successful.
  */
-export const initializeOllama = async () => {
+export const initializeOllama = async (modelName) => {
   try {
     const isRunning = await checkOllamaStatus()
     if (!isRunning) {
@@ -150,9 +150,8 @@ export const initializeOllama = async () => {
       console.log('Ollama is already running.')
     }
 
-    const modelName = config.llm.model
     if (!modelName) {
-      throw new Error('config.llm.model not set/found. Please set it in your .env file.')
+      throw new Error('No model name provided for initialization.')
     }
 
     console.log(`Checking model availability for: ${modelName}...`)

@@ -4,7 +4,8 @@ import { electronAPI } from '@electron-toolkit/preload'
 // Custom APIs for renderer
 const api = {
   // Ollama
-  initializeOllama: () => ipcRenderer.invoke('initialize-ollama'),
+  initializeOllama: (modelName) => ipcRenderer.invoke('initialize-ollama', modelName),
+  ensureModel: (modelName) => ipcRenderer.invoke('ensure-model', modelName),
   generateOllama: (prompt, model, stream, temperature, format) =>
     ipcRenderer.invoke('generate-ollama', prompt, model, stream, temperature, format),
 

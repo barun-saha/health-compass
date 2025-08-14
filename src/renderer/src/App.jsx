@@ -12,6 +12,7 @@ import Header from './components/Header'
 import ConversationDisplay from './components/ConversationDisplay'
 import ChatInput from './components/ChatInput'
 import AppNotification from './components/AppNotification'
+import SettingsDrawer from './components/SettingsDrawer'
 
 const wavyBackgroundSvg = `
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1422 800" opacity="0.3">
@@ -108,9 +109,10 @@ function createMessageId() {
  * Get a plan based on the user's input using Ollama.
  * @param {string} input - The user's input query.
  * @param {string} history - The conversation history.
+ * @param {string} model - The LLM model to use.
  * @returns {Promise<Object>} The parsed plan object.
  */
-const getPlan = async (input, history) => {
+const getPlan = async (input, history, model) => {
   const plannerSystemPrompt = getPrompt('planner_system')
   const ollamaResponseString = await generateOllama(
     formatTemplate(plannerSystemPrompt, {
@@ -118,7 +120,7 @@ const getPlan = async (input, history) => {
       query: input,
       history: history
     }),
-    config.llm.model,
+    model,
     false,
     0,
     zodToJsonSchema(PlanSchema)
@@ -155,6 +157,16 @@ function App() {
     }
   })
   const theme = useMemo(() => (darkMode ? darkTheme : lightTheme), [darkMode])
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const [selectedLlm, setSelectedLlm] = useState(() => {
+    try {
+      const savedLlm = window.localStorage.getItem('selectedLlm')
+      return savedLlm ? JSON.parse(savedLlm) : 'gemma3n:e2b' // Default model
+    } catch (error) {
+      console.error('Error reading selectedLlm from localStorage:', error)
+      return 'gemma3n:e2b'
+    }
+  })
 
   useEffect(() => {
     try {
@@ -163,6 +175,14 @@ function App() {
       console.error('Error writing darkMode to localStorage:', error)
     }
   }, [darkMode])
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem('selectedLlm', JSON.stringify(selectedLlm))
+    } catch (error) {
+      console.error('Error writing selectedLlm to localStorage:', error)
+    }
+  }, [selectedLlm])
 
   const [chat, setChat] = useState([])
   const [input, setInput] = useState('')
@@ -205,7 +225,7 @@ function App() {
         }
         setChat([{ id: createMessageId(), role: 'system', content: systemPrompt }])
 
-        const modelName = await window.electronAPI.initializeOllama()
+        const modelName = await window.electronAPI.initializeOllama(selectedLlm)
         showNotification(`Ollama initialized successfully! Using model: ${modelName}`, 'success')
       } catch (error) {
         showNotification(
@@ -271,7 +291,7 @@ function App() {
         }
       } else {
         // No PDF, proceed with the normal planning step.
-        plan = await getPlan(messageContent, chatHistoryString)
+        plan = await getPlan(messageContent, chatHistoryString, selectedLlm)
       }
 
       console.log('Plan:', plan)
@@ -352,6 +372,21 @@ function App() {
 
   const toggleTheme = () => setDarkMode(!darkMode)
 
+  const toggleSettings = () => setIsSettingsOpen(!isSettingsOpen)
+
+  const handleLlmChange = async (event) => {
+    const newModel = event.target.value
+    setSelectedLlm(newModel)
+    try {
+      showNotification(`Preparing model: ${newModel}... This may take a moment.`, 'info')
+      await window.electronAPI.ensureModel(newModel)
+      showNotification(`Model ${newModel} is ready to use!`, 'success')
+    } catch (error) {
+      console.error(`Failed to ensure model ${newModel}:`, error)
+      showNotification(`Failed to prepare model ${newModel}. See logs for details.`, 'error')
+    }
+  }
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -367,6 +402,14 @@ function App() {
           width: '100vw'
         }}
       >
+        <SettingsDrawer
+          open={isSettingsOpen}
+          onClose={() => setIsSettingsOpen(false)}
+          darkMode={darkMode}
+          toggleTheme={toggleTheme}
+          selectedLlm={selectedLlm}
+          handleLlmChange={handleLlmChange}
+        />
         <Box
           sx={{
             width: '100%',
@@ -376,7 +419,7 @@ function App() {
             padding: '2rem'
           }}
         >
-          <Header darkMode={darkMode} toggleTheme={toggleTheme} />
+          <Header toggleSettings={toggleSettings} />
 
           <ConversationDisplay
             chat={chat}
