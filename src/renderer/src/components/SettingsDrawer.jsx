@@ -36,6 +36,8 @@ const SettingsDrawer = ({ open, onClose, darkMode, toggleTheme, selectedLlm, han
                 onChange={handleLlmChange}
               >
                 <MenuItem value="gemma3n:e2b">gemma3n:e2b</MenuItem>
+                <MenuItem value="gemma3n:e4b">gemma3n:e4b</MenuItem>
+                <MenuItem value="gemma3:1b">gemma3:1b</MenuItem>
               </Select>
             </FormControl>
           </ListItem>
