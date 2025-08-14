@@ -201,9 +201,31 @@ async function handleOpenPdfFile() {
  * @returns {Promise<Object>} A promise that resolves to an object mapping prompt names to their content.
  */
 async function loadPrompts() {
-  const promptsDir = is.dev
-    ? join(app.getAppPath(), 'resources/prompts')
-    : join(process.resourcesPath, 'prompts')
+  const devCandidates = [
+    join(app.getAppPath(), 'resources', 'prompts'),
+    join(process.cwd(), 'resources', 'prompts'),
+    join(__dirname, '../../resources', 'prompts') // when __dirname points to dist/main
+  ]
+  const prodDir = join(process.resourcesPath, 'prompts')
+  let promptsDir = null
+  const candidates = is.dev ? devCandidates : [prodDir]
+
+  for (const c of candidates) {
+    try {
+      const stat = await fs.stat(c)
+      if (stat.isDirectory()) {
+        promptsDir = c
+        console.debug('Prompts directory found:', promptsDir)
+        break
+      }
+    } catch {
+      // continue
+    }
+  }
+  if (!promptsDir) {
+    console.error('No prompts directory found! Tried searching:', candidates)
+    return {}
+  }
 
   try {
     const promptFiles = await fs.readdir(promptsDir)
