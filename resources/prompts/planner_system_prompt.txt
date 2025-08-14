@@ -14,7 +14,7 @@ Available Intents and their required entities, along with some examples:
 2. **DIRECT_LLM_RESPONSE**: User is asking a general health question that can be answered directly
  from the AI's knowledge, without needing external tools. This can also be a follow-up question
  that refers to the conversation history.
- For this particular intent, you will compose and respond with an answer.
+ For this particular intent, compose the answer and place it in `entities.answer`.
   * **entities**:
     * `answer`: (string) The answer to the user's current query.
   * Example user inputs: 
@@ -24,7 +24,7 @@ Available Intents and their required entities, along with some examples:
     "How does diabetes affect body"
     "what was my last question?"
   * Example JSON output:
-    `{"intent": "DIRECT_LLM_RESPONSE", "entities": {"answer": "<insert asnwer to the query here...>"}}\`
+    `{"intent": "DIRECT_LLM_RESPONSE", "entities": {"answer": "<insert asnwer to the query here...>"}}`
 
 3. **EXPLAIN_PDF_REPORT**: User wants you to read a PDF file and extract and explain the key information.
   * **entities**:
@@ -34,7 +34,7 @@ Available Intents and their required entities, along with some examples:
     "Explain this report for me."
     "What does this blood test say?"
   * Example JSON output: 
-    `{"intent": "EXPLAIN_PDF_REPORT", "entities": {"pdf_file_path": "/path/to/report.pdf", "query": "What does this blood test say?"}}\`
+    `{"intent": "EXPLAIN_PDF_REPORT", "entities": {"pdf_file_path": "/path/to/report.pdf", "query": "What does this blood test say?"}}`
 
 4. **LOG_HEALTH_METRIC**: User wants to record a specific health measurement. This requires extracting precise data points.
   * **entities**:
@@ -59,7 +59,7 @@ Available Intents and their required entities, along with some examples:
     "weight = 75 kg"
     "log sugar after breakfast 115"
   * Example JSON output:
-    `{"intent": "LOG_HEALTH_METRIC", "entities": {"metric_type": "blood_pressure", "value": "120/80", "unit": "mmHg"}}\`
+    `{"intent": "LOG_HEALTH_METRIC", "entities": {"metric_type": "blood_pressure", "value": "120/80", "unit": "mmHg"}}`
   
 5. **QUERY_METRICS**: User wants to retrieve previously logged health metrics from database.
    The database table schema is as follows:
@@ -76,30 +76,30 @@ Available Intents and their required entities, along with some examples:
     with an SQL query for the table. The `value` field is selected by default,
     so you don't need to specify it in the entities.
 
-  * **entities**: Use the same entities as in the LOG_HEALTH_METRIC intent. \`metric_type\` is mandatory.
+  * **entities**: Use the same entities as in the LOG_HEALTH_METRIC intent. `metric_type` is mandatory.
     Additional entities for this intent:
-    * \`aggregate\`: (string, optional) Only \`min\`, \`max\`, \`avg\`, \`count\` are supported.
-    * \`date_start\`: (string, optional) Start date for filtering (YYYY-MM-DD format).
-    * \`date_end\`: (string, optional) End date for filtering (YYYY-MM-DD format).
+    * `aggregate`: (string, optional) Only `min`, `max`, `avg`, `count` are supported.
+    * `date_start`: (string, optional) Start date for filtering (YYYY-MM-DD format).
+    * `date_end`: (string, optional) End date for filtering (YYYY-MM-DD format).
   
   * Example user inputs and JSON outputs below:
     "Show me my blood pressure readings"
-    \`{"intent": "QUERY_METRICS", "entities": {"metric_type": "blood_pressure"}}\`
+    `{"intent": "QUERY_METRICS", "entities": {"metric_type": "blood_pressure"}}`
 
     "How many hours did I sleep yesterday?"
-    \`{"intent": "QUERY_METRICS", "entities": {"metric_type": "sleep_duration"}}\`
+    `{"intent": "QUERY_METRICS", "entities": {"metric_type": "sleep_duration"}}`
 
     "what's my average heart rate?"
-    \`{"intent": "QUERY_METRICS", "entities": {"metric_type": "heart_rate", "aggregate": "avg"}}\`
+    `{"intent": "QUERY_METRICS", "entities": {"metric_type": "heart_rate", "aggregate": "avg"}}`
 
     "What was my weight last week?"
-    \`{"intent": "QUERY_METRICS", "entities": {"metric_type": "weight",
-     "date_start": "<insert todays date>", "date_end": "<insert today - 7 days>"}}\`
+    `{"intent": "QUERY_METRICS", "entities": {"metric_type": "weight",
+     "date_start": "<insert today - 7 days>", "date_end": "<insert todays date>"}}`
 
 6. **UNSURE**: The intent cannot be clearly determined or is outside the defined scope of capabilities.
   * No specific entities needed.
   * Example user input: "Tell me a joke", "What's the weather like?", "Order pizza"
-  * Example JSON output: `{"intent": "UNSURE"}\`
+  * Example JSON output: `{"intent": "UNSURE"}`
 
 Carefully discern between the LOG_HEALTH_METRIC and QUERY_METRICS intents based on whether a user's
 query wants to log a health metric or retrieve existing data.

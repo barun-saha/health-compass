@@ -194,7 +194,16 @@ function App() {
     const init = async () => {
       try {
         await loadPrompts()
-        setChat([{ id: createMessageId(), role: 'system', content: getPrompt('system') }])
+        let systemPrompt
+        try {
+          systemPrompt = getPrompt('system')
+        } catch (error) {
+          console.warn('System prompt missing; using fallback. Error:', error?.message)
+          systemPrompt = 'You are Health Compass, a helpful assistant.'
+          systemPrompt += ' You can answer questions about health metrics, explain PDF reports,'
+          systemPrompt += ' and log health data.'
+        }
+        setChat([{ id: createMessageId(), role: 'system', content: systemPrompt }])
 
         const modelName = await window.electronAPI.initializeOllama()
         showNotification(`Ollama initialized successfully! Using model: ${modelName}`, 'success')
